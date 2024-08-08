@@ -1,0 +1,11 @@
+/.vs/
+/out/
+/.idea/
+/cmake-build-debug/
+/cmake-build-release/
+/cmake-build-clang_debug/
+/cmake-build-release-visual-studio/
+/cmake-build-debug-visual-studio/
+/cmake-build-relwithdebinfo/
+/CMakeSettings.json
+/papers/

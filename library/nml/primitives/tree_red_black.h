@@ -16,9 +16,9 @@ namespace nml
     {
         struct Node
         {
-            UBigInt left = 0;
-            UBigInt right = 0;
-            UBigInt parent = 0;
+            uint64_t left = 0;
+            uint64_t right = 0;
+            uint64_t parent = 0;
 
             T data;
             bool is_red = true;
@@ -35,52 +35,52 @@ namespace nml
             Node& operator=(const Node& other) = delete;
         };
 
-        explicit RedBlackTree(UBigInt initial_capacity = 0) noexcept;
+        explicit RedBlackTree(uint64_t initial_capacity = 0) noexcept;
 
         RedBlackTree(const RedBlackTree& other) = delete;
         RedBlackTree& operator=(const RedBlackTree& other) = delete;
 
         [[nodiscard]] bool is_empty() noexcept { return _root_index == 0; }
-        [[nodiscard]] UBigInt get_root_index() noexcept { return _root_index; }
-        [[nodiscard]] inline Node& get_node(UBigInt index) noexcept { return _node_allocator.get_element(index); }
-        [[nodiscard]] inline Node& get_parent(UBigInt index) noexcept { return get_node(get_node(index).parent); }
+        [[nodiscard]] uint64_t get_root_index() noexcept { return _root_index; }
+        [[nodiscard]] inline Node& get_node(uint64_t index) noexcept { return _node_allocator.get_element(index); }
+        [[nodiscard]] inline Node& get_parent(uint64_t index) noexcept { return get_node(get_node(index).parent); }
 
         bool remove(T value) noexcept;
-        [[nodiscard]] UBigInt find(T value) noexcept;
-        UBigInt insert(T value, bool insert_unique = false) noexcept;
+        [[nodiscard]] uint64_t find(T value) noexcept;
+        uint64_t insert(T value, bool insert_unique = false) noexcept;
 
-        [[nodiscard]] UBigInt min(UBigInt index = 0) noexcept;
-        [[nodiscard]] UBigInt max(UBigInt index = 0) noexcept;
+        [[nodiscard]] uint64_t min(uint64_t index = 0) noexcept;
+        [[nodiscard]] uint64_t max(uint64_t index = 0) noexcept;
 
-        void print(UBigInt index, int space = 0) noexcept;
+        void print(uint64_t index, int space = 0) noexcept;
 
     private:
 
-        UBigInt _root_index;
+        uint64_t _root_index;
         Allocator<Node> _node_allocator;
 
-        void _insert_adjust(UBigInt index) noexcept;
-        void _delete_adjust(UBigInt index) noexcept;
+        void _insert_adjust(uint64_t index) noexcept;
+        void _delete_adjust(uint64_t index) noexcept;
 
-        void _rotate_left(UBigInt index) noexcept;
-        void _rotate_right(UBigInt index) noexcept;
-        void _transplant(UBigInt root_index, UBigInt transplant_index) noexcept;
+        void _rotate_left(uint64_t index) noexcept;
+        void _rotate_right(uint64_t index) noexcept;
+        void _transplant(uint64_t root_index, uint64_t transplant_index) noexcept;
     };
 
     template<typename T>
-    RedBlackTree<T>::RedBlackTree(UBigInt initial_capacity) noexcept
+    RedBlackTree<T>::RedBlackTree(uint64_t initial_capacity) noexcept
         : _root_index(0)
         , _node_allocator(Allocator<Node>(initial_capacity))
     { }
 
     template<typename T>
-    UBigInt RedBlackTree<T>::min(UBigInt index) noexcept
+    uint64_t RedBlackTree<T>::min(uint64_t index) noexcept
     {
         if (is_empty()) return 0;
 
         if (index == 0) index = _root_index;
 
-        UBigInt previous = index;
+        uint64_t previous = index;
 
         while (index != 0)
         {
@@ -92,13 +92,13 @@ namespace nml
     }
 
     template<typename T>
-    UBigInt RedBlackTree<T>::max(UBigInt index) noexcept
+    uint64_t RedBlackTree<T>::max(uint64_t index) noexcept
     {
         if (is_empty()) return 0;
 
         if (index == 0) index = _root_index;
 
-        UBigInt previous = index;
+        uint64_t previous = index;
 
         while (index != 0)
         {
@@ -110,9 +110,9 @@ namespace nml
     }
 
     template<typename T>
-    UBigInt RedBlackTree<T>::find(const T value) noexcept
+    uint64_t RedBlackTree<T>::find(const T value) noexcept
     {
-        UBigInt current = _root_index;
+        uint64_t current = _root_index;
 
         while (current != 0)
         {
@@ -136,10 +136,10 @@ namespace nml
     }
 
     template<typename T>
-    UBigInt RedBlackTree<T>::insert(const T value, const bool insert_unique) noexcept
+    uint64_t RedBlackTree<T>::insert(const T value, const bool insert_unique) noexcept
     {
-        UBigInt parent_index = 0;
-        UBigInt current_index = _root_index;
+        uint64_t parent_index = 0;
+        uint64_t current_index = _root_index;
 
         while (current_index != 0)
         {
@@ -161,7 +161,7 @@ namespace nml
             }
         }
 
-        UBigInt new_index = _node_allocator.claim_next_index();
+        uint64_t new_index = _node_allocator.claim_next_index();
         Node& new_node = get_node(new_index);
 
         new_node.data = value;
@@ -193,14 +193,14 @@ namespace nml
     template<typename T>
     bool RedBlackTree<T>::remove(const T value) noexcept
     {
-        UBigInt index = find(value);
+        uint64_t index = find(value);
 
         if (index == 0) return false;
 
         Node& node = get_node(index);
 
-        UBigInt current_index = 0;
-        UBigInt parent_index = index;
+        uint64_t current_index = 0;
+        uint64_t parent_index = index;
         bool started_red = node.is_red;
 
         if (node.left == 0)
@@ -273,16 +273,16 @@ namespace nml
     }
 
     template<typename T>
-    void RedBlackTree<T>::_insert_adjust(UBigInt index) noexcept
+    void RedBlackTree<T>::_insert_adjust(uint64_t index) noexcept
     {
         while (index != _root_index && get_parent(index).is_red)
         {
-            UBigInt parent_index = get_node(index).parent;
-            UBigInt grandparent_index = get_node(parent_index).parent;
+            uint64_t parent_index = get_node(index).parent;
+            uint64_t grandparent_index = get_node(parent_index).parent;
 
             if (get_node(index).parent == get_node(grandparent_index).left)
             {
-                UBigInt uncle_right_index = get_node(grandparent_index).right;
+                uint64_t uncle_right_index = get_node(grandparent_index).right;
 
                 if (uncle_right_index != 0 && get_node(uncle_right_index).is_red)
                 {
@@ -311,7 +311,7 @@ namespace nml
             }
             else
             {
-                BigInt uncle_left_index = get_node(grandparent_index).left;
+                int64_t uncle_left_index = get_node(grandparent_index).left;
 
                 if (uncle_left_index != 0 && get_node(uncle_left_index).is_red)
                 {
@@ -347,15 +347,15 @@ namespace nml
     }
 
     template<typename T>
-    void RedBlackTree<T>::_delete_adjust(UBigInt index) noexcept
+    void RedBlackTree<T>::_delete_adjust(uint64_t index) noexcept
     {
         while (index != _root_index && index != 0 && !get_node(index).is_red)
         {
-            UBigInt parent_index = get_node(index).parent;
+            uint64_t parent_index = get_node(index).parent;
 
             if (index == get_node(parent_index).left)
             {
-                UBigInt brother_right_index = get_node(parent_index).right;
+                uint64_t brother_right_index = get_node(parent_index).right;
 
                 if (get_node(brother_right_index).is_red)
                 {
@@ -405,7 +405,7 @@ namespace nml
             }
             else
             {
-                UBigInt brother_left_index = get_node(parent_index).left;
+                uint64_t brother_left_index = get_node(parent_index).left;
 
                 if (get_node(brother_left_index).is_red)
                 {
@@ -463,7 +463,7 @@ namespace nml
     }
 
     template<typename T>
-    void RedBlackTree<T>::_rotate_left(const UBigInt index) noexcept
+    void RedBlackTree<T>::_rotate_left(const uint64_t index) noexcept
     {
         if (index == 0 || get_node(index).right == 0)
         {
@@ -472,7 +472,7 @@ namespace nml
 
         Node& node = get_node(index);
 
-        UBigInt right_index = node.right;
+        uint64_t right_index = node.right;
         Node& right_node = get_node(right_index);
 
         node.right = right_node.left;
@@ -503,7 +503,7 @@ namespace nml
     }
 
     template<typename T>
-    void RedBlackTree<T>::_rotate_right(UBigInt index) noexcept
+    void RedBlackTree<T>::_rotate_right(uint64_t index) noexcept
     {
         if (index == 0 || get_node(index).left == 0)
         {
@@ -512,7 +512,7 @@ namespace nml
 
         Node& node = get_node(index);
 
-        UBigInt left_index = node.left;
+        uint64_t left_index = node.left;
         Node& left_node = get_node(left_index);
 
         node.left = left_node.right;
@@ -543,7 +543,7 @@ namespace nml
     }
 
     template<typename T>
-    void RedBlackTree<T>::_transplant(UBigInt root_index, UBigInt transplant_index) noexcept
+    void RedBlackTree<T>::_transplant(uint64_t root_index, uint64_t transplant_index) noexcept
     {
         Node& root_node = get_node(root_index);
         Node& transplant_node = get_node(transplant_index);
@@ -568,7 +568,7 @@ namespace nml
     }
 
     template<typename T>
-    void RedBlackTree<T>::print(UBigInt index, int space) noexcept
+    void RedBlackTree<T>::print(uint64_t index, int space) noexcept
     {
         constexpr int COUNT = 5;
         if (index == 0) return;

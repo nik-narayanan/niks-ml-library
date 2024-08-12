@@ -92,7 +92,7 @@ int main()
         pca.projection.print();
     }
 
-    return 1;
+    return 0;
 }
 ```
 
@@ -158,7 +158,7 @@ int main()
 
     nearest_neighbors.print();
 
-    return 1;
+    return 0;
 }
 ```
 
@@ -220,7 +220,7 @@ int main()
         }
     }
     
-    return 1;
+    return 0;
 }
 ```
 
@@ -272,7 +272,7 @@ int main()
 
     ols.summary(test_span).print();
 
-    return 1;
+    return 0;
 }
 ```
 
@@ -405,7 +405,7 @@ int main()
 
     basic_operations();
 
-    return 1;
+    return 0;
 }
 
 ```
@@ -441,7 +441,7 @@ int main()
         printf("Found URL: %.*s\n", current.length, current.match);
     }
 
-    return 1;
+    return 0;
 }
 ```
 
@@ -485,7 +485,7 @@ int main()
         std::cout << heap_max.pop() << std::endl;
     }
 
-    return 1;
+    return 0;
 }
 ```
 #### MinHeap
@@ -525,7 +525,7 @@ int main()
         std::cout << heap_min.pop() << std::endl;
     }
 
-    return 1;
+    return 0;
 }
 ```
 ### [MinMaxHeap](library/nml/primitives/heap_min_max.h)
@@ -565,7 +565,7 @@ int main()
         std::cout << queue.remove_max_unsafe() << std::endl;
     }
 
-    return 1;
+    return 0;
 }
 ```
 ### [HashSet](library/nml/primitives/hash.h)
@@ -602,7 +602,7 @@ int main()
         else next.print("", false);
     }
 
-    return 1;
+    return 0;
 }
 ```
 ### [HashMap](library/nml/primitives/hash.h)
@@ -631,7 +631,7 @@ int main()
         std::cout << value << std::endl;
     }
 
-    return 1;
+    return 0;
 }
 ```
 

@@ -10,12 +10,14 @@ I am aiming to expand functionality, improve performance, and increase compatibi
 
 - **Enhanced Data Structures**: Introduce double precision support to `VectorSpan` and `MatrixSpan` to accommodate use cases where more precision is required.
 
+- **Time Series**: Add native and simple implementations of ARIMA, GARCH, Decomposition, and Kalman Filtering.
+
 - **XGBoost**: Add a native and simple implementation of XGBoost.
 
 - **Parquet Support**: Implement support for reading and writing data in Parquet format to and from DataFrames.
 
 - **Compiler Flags for Advanced Vectorization**:
-  - **SSE and AVX**: Add compile flags for SSE and AVX to optimize performance on compatible CPUs, while maintaing compatability with simpler CPUs and Emscripten.
+  - **SSE and AVX**: Add compile flags for SSE and AVX to optimize performance on compatible CPUs, while maintaining compatability with simpler CPUs and Emscripten.
   - **CUDA**: Add CUDA compile flags to enable GPU acceleration where appropriate.
 
 - **Threading Enhancements**: Develop a threading model that is compatible with Emscripten to allow performance improvements while ensuring compatibility and performance in web environments.
@@ -317,6 +319,8 @@ int main()
     auto regression = result.ok();
 
     regression.summary(test_span).print();
+    
+    return 0;
 }
 ```
 
@@ -625,7 +629,7 @@ int main()
         map.insert(i, map.count() * 2);
     }
 
-    for (int i = -100; i < 100; ++i)
+    for (int i = -10; i < 10; ++i)
     {
         auto value = *map.get_value(i);
         std::cout << value << std::endl;
@@ -634,4 +638,3 @@ int main()
     return 0;
 }
 ```
-

@@ -5,124 +5,60 @@
 #ifndef NML_HASH_H
 #define NML_HASH_H
 
-#include "span.h"
-#include "iterator.h"
+#include <functional>
+#include <string_view>
 
-namespace nml::hash_internal
-{
-    template<typename T>
-    struct HashTable;
-}
+#include "span.h"
+
+namespace nml::hash_internal { template<typename T> struct HashTable; }
 
 namespace nml
 {
     template<typename T>
-    class HashSet
+    struct HashSet
     {
-        hash_internal::HashTable<T> _table;
-
-    public:
-
         HashSet() noexcept;
 
-        inline bool insert(T value) noexcept;
-        inline uint64_t count() const noexcept;
-        inline bool contains(T& value) noexcept;
-        inline bool remove(const T& value) noexcept;
-        struct Iterator; Iterator to_iterator() const noexcept;
+        struct Iterator;
+        Iterator end() const noexcept;
+        Iterator begin() const noexcept;
+        bool insert(const T& value) noexcept;
+        bool remove(const T& value) noexcept;
+        [[nodiscard]] uint64_t count() const noexcept;
+        [[nodiscard]] bool contains(const T& value) const noexcept;
+
+    private:
+        hash_internal::HashTable<T> _table;
     };
 
     template<typename TKey, typename TValue>
-    class HashMap
+    struct HashMap
     {
-        hash_internal::HashTable<std::pair<TKey, TValue>> _table;
-
-    public:
-
         HashMap() noexcept;
 
-        inline uint64_t count() noexcept;
-        inline bool remove(const TKey& key) noexcept;
-        inline TValue& insert(const TKey& key, const TValue& value) noexcept;
-//        inline TValue& insert(TKey key, TValue value) noexcept;
-        inline bool contains_key(const TKey& key) noexcept;
-        inline TValue* get_value(const TKey& key) noexcept;
-        inline TValue* operator[](const TKey& key) noexcept;
-        inline TValue& get_value_unsafe(const TKey& key) noexcept;
-        inline bool try_get_value(const TKey& key, TValue*& value_out) const noexcept;
-//        struct Iterator; Iterator to_iterator() const noexcept;
+        struct Iterator;
+        Iterator end() const noexcept;
+        Iterator begin() const noexcept;
+        bool remove(const TKey& key) noexcept;
+        [[nodiscard]] uint64_t count() const noexcept;
+        [[nodiscard]] TValue* get_value(const TKey& key) noexcept;
+        [[nodiscard]] TValue* operator[](const TKey& key) noexcept;
+        TValue* insert(const TKey& key, const TValue& value) noexcept;
+        [[nodiscard]] bool contains_key(const TKey& key) const noexcept;
+        [[nodiscard]] TValue& get_value_unsafe(const TKey& key) noexcept;
+        [[nodiscard]] bool try_get_value(const TKey& key, TValue*& value_out) const noexcept;
+
+    private:
+        hash_internal::HashTable<std::pair<TKey, TValue>> _table;
     };
 }
 
 namespace nml::hash_internal
 {
-    static inline uint16_t hash_fragment(uint64_t hash) noexcept
+    template<typename T>
+    static inline uint64_t hash_value(const T& value) noexcept
     {
-        return (hash >> 48) & 0xF000;
-    }
-
-    static inline uint64_t hash_value(uint64_t value) noexcept
-    {
-        value ^= value >> 23;
-        value *= 0x2127599bf4325c37ull;
-        value ^= value >> 47;
-
-        return value;
-    }
-
-    static inline uint64_t hash_value(uint32_t value)
-    {
-        return hash_value(static_cast<uint64_t>(value));
-    }
-
-    static inline uint64_t hash_value(uint16_t value)
-    {
-        return hash_value(static_cast<uint64_t>(value));
-    }
-
-    static inline uint64_t hash_value(int32_t value) noexcept
-    {
-        uint32_t unsigned_value = reinterpret_cast<uint32_t&>(value);
-        return hash_value(unsigned_value);
-    }
-
-    static inline uint64_t hash_value(int16_t value) noexcept
-    {
-        uint16_t unsigned_value = reinterpret_cast<uint16_t&>(value);
-        return hash_value(static_cast<uint64_t>(unsigned_value));
-    }
-
-    static inline uint64_t hash_value(int64_t value) noexcept
-    {
-        uint64_t unsigned_value = reinterpret_cast<uint64_t&>(value);
-        return hash_value(unsigned_value);
-    }
-
-    static inline uint64_t hash_value(float value)
-    {
-        uint32_t unsigned_value = reinterpret_cast<uint32_t&>(value);
-        return hash_value(unsigned_value);
-    }
-
-    static inline uint64_t hash_value(double value)
-    {
-        uint64_t unsigned_value = reinterpret_cast<uint64_t&>(value);
-        return hash_value(unsigned_value);
-    }
-
-    static inline uint64_t hash_value(const MemorySpan& memory) noexcept
-    {
-        uint64_t hash = 0xCBF29CE484222325;
-
-        auto bytes = Span<unsigned char>(memory);
-
-        for (uint64_t i = 0; i < bytes.length; ++i)
-        {
-            hash ^= static_cast<uint64_t>(bytes[i]);
-            hash *= 0x100000001B3;
-        }
-
-        return hash;
+        return std::hash<T>{}(value);
     }
 
     static inline uint64_t hash_value(const char* string) noexcept
@@ -138,202 +74,39 @@ namespace nml::hash_internal
         return hash;
     }
 
-    template<typename T>
-    static inline uint64_t hash_value(const Span<T>& span) noexcept
-    {
-        return hash_value(span.to_memory_unsafe());
-    }
-
-    template<typename TIterator>
-    static inline uint64_t hash_value(Iterator<char, TIterator>& iterator) noexcept
-    {
-        iterator.reset();
-
-        uint64_t hash = 0xCBF29CE484222325;
-
-        while (iterator.has_next())
-        {
-            auto next = (unsigned char)iterator.next();
-
-            hash ^= static_cast<uint64_t>(next);
-            hash *= 0x100000001B3;
-        }
-
-        return hash;
-    }
-
-    template<typename T, typename TIterator>
-    static inline uint64_t hash_value(Iterator<T, TIterator>& iterator) noexcept
-    {
-        iterator.reset();
-
-        uint64_t hash = 0xCBF29CE484222325;
-
-        while (iterator.has_next())
-        {
-            T next = iterator.next();
-
-            auto bytes = reinterpret_cast<const unsigned char*>(&next);
-            const unsigned char* end = bytes + sizeof(T);
-
-            while (bytes < end)
-            {
-                hash ^= static_cast<uint64_t>(*bytes++);
-                hash *= 0x100000001B3;
-            }
-        }
-
-        return hash;
-    }
-
-
-//    template<typename T>
-//    static inline T copy_value_and_zero_padding(T value) noexcept
-//    {
-//        alignas(T) unsigned char memory[sizeof(T)];
-//
-//        memset(memory, 0, sizeof(T));
-//
-//        T* ptr = new (memory) T(value);
-//
-//        T result = *ptr;
-//
-//        if constexpr (!std::is_trivially_destructible<T>::value)
-//        {
-//            ptr->~T();
-//        }
-//
-//        return result;
-//    }
-//
-//    template<typename T>
-//    static inline uint64_t hash_value(T value) noexcept
-//    {
-//        alignas(T) unsigned char memory[sizeof(T)];
-//
-//        memset(memory, 0, sizeof(T));
-//
-//        T* ptr = new (memory) T(value);
-//
-//        auto hash = hash_memory(memory, sizeof(T));
-//
-//        if constexpr (!std::is_trivially_destructible<T>::value)
-//        {
-//            ptr->~T();
-//        }
-//
-//        return hash;
-//    }
-
-
-    static inline bool compare_values(int16_t left, int16_t right) noexcept
-    {
-        return left == right;
-    }
-
-    static inline bool compare_values(int32_t left, int32_t right) noexcept
-    {
-        return left == right;
-    }
-
-    static inline bool compare_values(int64_t left, int64_t right) noexcept
-    {
-        return left == right;
-    }
-
-    static inline bool compare_values(uint16_t left, uint16_t right) noexcept
-    {
-        return left == right;
-    }
-
-    static inline bool compare_values(uint32_t left, uint32_t right) noexcept
-    {
-        return left == right;
-    }
-
-    static inline bool compare_values(uint64_t left, uint64_t right) noexcept
-    {
-        return left == right;
-    }
-
-    static inline bool compare_values(float left, float right) noexcept
-    {
-        return left == right;
-    }
-
-    static inline bool compare_values(double left, double right) noexcept
-    {
-        return left == right;
-    }
-
-    static inline bool compare_values(const MemorySpan& left, const MemorySpan& right) noexcept
-    {
-        if (left.bytes != right.bytes) return false;
-
-        return memcmp(left.get_pointer(), right.get_pointer(), left.bytes) == 0;
-    }
-
     static inline bool compare_values(const char* left, const char* right) noexcept
     {
         return strcmp(left, right) == 0;
     }
 
     template<typename T>
-    static inline bool compare_values(const Span<T>& left, const Span<T>& right) noexcept
+    static inline bool compare_values(const T& left, const T& right) noexcept
     {
-        return compare_values(left.to_memory_unsafe(), right.to_memory_unsafe());
+        return left == right;
     }
 
-    template<typename T, typename TIterator>
-    static inline bool compare_values(Iterator<T, TIterator>& left, Iterator<T, TIterator>& right) noexcept
+    static constexpr int8_t AVAILABLE = -1;
+
+    template<typename T>
+    struct Entry
     {
-        int64_t left_length = left.length(), right_length = right.length();
-
-        if (left_length >= 0 && right_length >= 0 && left_length != right_length)
-        {
-            return false;
-        }
-
-        left.reset(), right.reset();
-
-        while (left.has_next() && right.has_next())
-        {
-            if (left.next() != right.next())
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    static inline uint64_t quadratic(uint16_t displacement) noexcept
-    {
-        return ((uint64_t)displacement * displacement + displacement) / 2;
-    }
-
-    static const uint16_t zero = 0x0000;
-
-    static inline Span<uint16_t> default_metadata() noexcept
-    {
-        return Span<uint16_t>((uint16_t*)&zero, 1);
-    }
-
-    struct Location
-    {
-        bool exists;
-        uint16_t displacement;
-        uint64_t buckets_offset;
+        int8_t offset{AVAILABLE};
+        T data;
     };
 
-    struct MemoryLayout
+    struct TableLocation
     {
-        uint64_t bucket_bytes;
-        uint64_t metadata_bytes;
+        int8_t offset;
+        uint64_t start;
 
-        [[nodiscard]] uint64_t total_bytes() const noexcept
+        static TableLocation starting(uint64_t start) noexcept
         {
-            return bucket_bytes + metadata_bytes;
+            return { .offset = 0, .start = start };
+        }
+
+        static TableLocation not_found() noexcept
+        {
+            return { .offset = -1, .start = 0 };
         }
     };
 
@@ -352,28 +125,263 @@ namespace nml::hash_internal
         HashTable() noexcept;
         ~HashTable() noexcept;
 
-        struct Iterator;
+        HashTable(const HashTable&) = delete;
+        HashTable& operator=(const HashTable&) = delete;
 
-        Span<T> buckets;
+        HashTable(HashTable&& move) noexcept;
+        HashTable& operator=(HashTable&& move) noexcept;
+
         uint64_t key_ct;
         uint64_t buckets_mask;
-        Span<uint16_t> metadata;
+        Span<Entry<T>> entries;
+        const float load_factor = 0.5;
+        const uint8_t max_displacement = 4;
 
         bool resize() noexcept;
-        T* find(T& value) noexcept;
-        bool evict(size_t bucket) noexcept;
-        [[nodiscard]] Iterator iterator() const noexcept;
-        static inline uint64_t hash_key(T& value) noexcept;
-        static inline bool compare(T& value, T& other) noexcept;
-        [[nodiscard]] inline uint64_t bucket_ct() const noexcept;
-        T* insert(T& value, bool unique) noexcept;
-        inline Location find_first_empty_location(uint64_t home_bucket) noexcept;
-        static inline MemoryLayout size_memory_layout(uint64_t bucket_ct) noexcept;
-        uint64_t find_insert_location(uint64_t home_bucket, uint16_t displacement_to_empty) noexcept;
+        T* find(const T& value) noexcept;
+        bool insert(const T& value) noexcept;
+        bool remove(const T& value) noexcept;
+        T* insert_return(const T& value) noexcept;
+        bool insert_unique(const T& value) noexcept;
+        bool contains(const T& value) const noexcept;
+        [[nodiscard]] uint64_t bucket_ct() const noexcept;
+        static uint64_t hash_key(const T& value) noexcept;
+        TableLocation find_location(const T& value) noexcept;
+        T* insert_lookup(T value, TableLocation location) noexcept;
+        static bool compare(const T& value, const T& other) noexcept;
     };
 
     template<typename T>
-    bool HashTable<T>::compare(T& value, T& other) noexcept
+    HashTable<T>::HashTable(HashTable&& move) noexcept
+        : key_ct(move.key_ct), entries(move.entries), buckets_mask(move.buckets_mask)
+    {
+        move.key_ct = 0;
+        move.buckets_mask = 0;
+        move.entries = Span<Entry<T>>(nullptr, 0);
+    }
+
+    template<typename T>
+    HashTable<T> &HashTable<T>::operator=(HashTable&& move) noexcept
+    {
+        if (this != &move)
+        {
+            this->~HashTable();
+            new(this) HashTable(std::move(move));
+        }
+
+        return *this;
+    }
+
+    template<typename T>
+    HashTable<T>::HashTable() noexcept
+        : key_ct(0), entries(), buckets_mask(8 - 1)
+    {
+        uint64_t total_entries = bucket_ct() + max_displacement + 1;
+
+        auto new_memory = MemorySpan(entries.required_bytes(total_entries));
+
+        new_memory.fill(AVAILABLE);
+
+        entries = Span<Entry<T>>(new_memory, total_entries);
+    }
+
+    template<typename T>
+    HashTable<T>::~HashTable() noexcept
+    {
+        std::free(entries.get_pointer());
+    }
+
+    template<typename T>
+    bool HashTable<T>::resize() noexcept
+    {
+        auto old_key_ct = key_ct;
+        auto old_entries = entries;
+        auto old_buckets_ct = bucket_ct();
+        auto old_buckets_mask = buckets_mask;
+
+        uint64_t new_bucket_ct = old_buckets_ct * 2;
+
+        while (true)
+        {
+            uint64_t total_entries = new_bucket_ct + max_displacement + 1;
+
+            auto new_memory = MemorySpan(entries.required_bytes(total_entries));
+
+            new_memory.fill(AVAILABLE);
+            key_ct = 0, buckets_mask = new_bucket_ct - 1;
+            entries = Span<Entry<T>>(new_memory, total_entries);
+
+            for (uint64_t bucket = 0; bucket < old_entries.length; ++bucket)
+            {
+                if (old_entries[bucket].offset == AVAILABLE) continue;
+
+                if (!insert_unique(old_entries[bucket].data)) break;
+            }
+
+            if (key_ct < old_key_ct)
+            {
+                std::free(new_memory.get_pointer());
+
+                new_bucket_ct *= 2; continue;
+            }
+
+            if (old_buckets_mask)
+            {
+                std::free(old_entries.get_pointer());
+            }
+
+            return true;
+        }
+    }
+
+    template<typename T>
+    bool HashTable<T>::insert(const T& value) noexcept
+    {
+        uint64_t hash = hash_key(value);
+        TableLocation location = TableLocation::starting(hash & buckets_mask);
+        Entry<T>* entry = entries.get_pointer(location.start);
+
+        while (entry->offset >= location.offset)
+        {
+            if (compare(entry->data, value)) return false;
+
+            ++entry, ++location.offset;
+        }
+
+        insert_lookup(value, location); return true;
+    }
+
+    template<typename T>
+    T* HashTable<T>::insert_return(const T& value) noexcept
+    {
+        uint64_t hash = hash_key(value);
+        TableLocation location = TableLocation::starting(hash & buckets_mask);
+        Entry<T>* entry = entries.get_pointer(location.start);
+
+        while (entry->offset >= location.offset)
+        {
+            if (compare(entry->data, value)) return &entry->data;
+
+            ++entry, ++location.offset;
+        }
+
+        return insert_lookup(value, location);
+    }
+
+    template<typename T>
+    T* HashTable<T>::find(const T& value) noexcept
+    {
+        uint64_t hash = hash_key(value);
+        TableLocation location = TableLocation::starting(hash & buckets_mask);
+        Entry<T>* entry = entries.get_pointer(location.start);
+
+        while (entry->offset >= location.offset)
+        {
+            if (compare(entry->data, value)) return &entry->data;
+
+            ++entry, ++location.offset;
+        }
+
+        return nullptr;
+    }
+
+    template<typename T>
+    TableLocation HashTable<T>::find_location(const T& value) noexcept
+    {
+        uint64_t hash = hash_key(value);
+        TableLocation location = TableLocation::starting(hash & buckets_mask);
+        Entry<T>* entry = entries.get_pointer(location.start);
+
+        while (entry->offset >= location.offset)
+        {
+            if (compare(entry->data, value)) return location;
+
+            ++entry, ++location.offset;
+        }
+
+        return TableLocation::not_found();
+    }
+
+    template<typename T>
+    bool HashTable<T>::remove(const T& value) noexcept
+    {
+        TableLocation location = find_location(value);
+
+        if (location.offset == -1) return false;
+
+        Entry<T>* entry = entries.get_pointer(location.start + location.offset);
+
+        entry->offset = AVAILABLE;
+
+        while ((++entry)->offset > 0)
+        {
+            (entry - 1)->data = entry->data;
+            (entry - 1)->offset = entry->offset - 1;
+
+            entry->offset = AVAILABLE;
+        }
+
+        key_ct -= 1; return true;
+    }
+
+    template<typename T>
+    bool HashTable<T>::contains(const T& value) const noexcept
+    {
+        uint64_t hash = hash_key(value);
+        TableLocation location = TableLocation::starting(hash & buckets_mask);
+        Entry<T>* entry = entries.get_pointer(location.start);
+
+        while (entry->offset >= location.offset)
+        {
+            if (compare(entry->data, value)) return &entry->data;
+
+            ++entry, ++location.offset;
+        }
+
+        return false;
+    }
+
+    template<typename T>
+    T* HashTable<T>::insert_lookup(T value, TableLocation location) noexcept
+    {
+        if (key_ct > buckets_mask * load_factor) { resize(); return insert_return(value); }
+
+        auto* entry = entries.get_pointer(location.start + location.offset);
+
+        do
+        {
+            if (entry->offset == AVAILABLE)
+            {
+                entry->data = value;
+                entry->offset = location.offset;
+
+                key_ct += 1; return &entry->data;
+            }
+
+            if (entry->offset < location.offset)
+            {
+                std::swap(value, entry->data);
+                std::swap(location.offset, entry->offset);
+            }
+
+            ++entry, ++location.offset;
+        }
+        while (location.offset < max_displacement);
+
+        resize(); return insert_return(value);
+    }
+
+    template<typename T>
+    bool HashTable<T>::insert_unique(const T& value) noexcept
+    {
+        uint64_t hash = hash_key(value);
+        TableLocation location = TableLocation::starting(hash & buckets_mask);
+
+        return insert_lookup(value, location);
+    }
+
+    template<typename T>
+    bool HashTable<T>::compare(const T& value, const T& other) noexcept
     {
         if constexpr (is_pair_v<T>)
         {
@@ -386,7 +394,7 @@ namespace nml::hash_internal
     }
 
     template<typename T>
-    inline uint64_t HashTable<T>::hash_key(T& value) noexcept
+    uint64_t HashTable<T>::hash_key(const T& value) noexcept
     {
         if constexpr (is_pair_v<T>)
         {
@@ -399,327 +407,9 @@ namespace nml::hash_internal
     }
 
     template<typename T>
-    HashTable<T>::HashTable() noexcept
-        : key_ct(0), buckets(), metadata(default_metadata()), buckets_mask(32 - 1)
-    {
-        uint64_t bucket_count = bucket_ct();
-        MemoryLayout layout = size_memory_layout(bucket_count);
-
-        uint64_t total_bytes = layout.total_bytes();
-        auto new_memory = MemorySpan(static_cast<char*>(std::malloc(total_bytes)), total_bytes);
-
-        buckets = Span<T>(new_memory, bucket_count);
-        metadata = Span<uint16_t>(new_memory.offset(layout.bucket_bytes), bucket_count);
-
-        metadata.zero();
-        metadata[bucket_count] = 0x01;
-    }
-
-    template<typename T>
-    HashTable<T>::~HashTable() noexcept
-    {
-        std::free(buckets.get_pointer());
-    }
-
-    template<typename T>
-    bool HashTable<T>::resize() noexcept
-    {
-        auto old_key_ct = key_ct;
-        auto old_buckets = buckets;
-        auto old_buckets_ct = bucket_ct();
-        auto old_metadata = metadata;
-        auto old_buckets_mask = buckets_mask;
-
-        uint64_t new_bucket_ct = old_buckets_ct * 2;
-
-        while (true)
-        {
-            MemoryLayout layout = size_memory_layout(new_bucket_ct);
-            uint64_t total_bytes = layout.total_bytes();
-
-            auto new_memory = MemorySpan(static_cast<char*>(std::malloc(total_bytes)), total_bytes);
-
-            buckets_mask = new_bucket_ct - 1;
-            buckets = Span<T>(new_memory, new_bucket_ct);
-            metadata = Span<uint16_t>(new_memory.offset(layout.bucket_bytes), new_bucket_ct);
-
-            metadata.zero();
-            metadata[new_bucket_ct] = 0x01;
-
-            key_ct = 0;
-
-            for (uint64_t bucket = 0; bucket < old_buckets_ct; ++bucket)
-            {
-                if (old_metadata[bucket] == 0) continue;
-
-                bool inserted = insert(old_buckets[bucket], true) != nullptr;
-
-                if (!inserted) break;
-            }
-
-            if (key_ct < old_key_ct)
-            {
-                std::free(new_memory.get_pointer());
-
-                new_bucket_ct *= 2;
-                continue;
-            }
-
-            if (old_buckets_mask)
-            {
-                std::free(old_buckets.get_pointer());
-            }
-
-            return true;
-        }
-    }
-
-    template<typename T>
-    MemoryLayout HashTable<T>::size_memory_layout(uint64_t bucket_ct) noexcept
-    {
-        return MemoryLayout
-        {
-            .bucket_bytes = (((bucket_ct + 1) * sizeof(T) + sizeof(uint16_t) - 1) / sizeof(uint16_t)) * sizeof(uint16_t),
-            .metadata_bytes = (bucket_ct + 1 + 4) * sizeof(uint16_t)
-        };
-    }
-
-    template<typename T>
-    T* HashTable<T>::find(T& value) noexcept
-    {
-        uint64_t hash = hash_key(value);
-        uint64_t home_bucket = hash & buckets_mask;
-
-        if (!(metadata[home_bucket] & 0x0800))
-        {
-            return nullptr;
-        }
-
-        uint16_t fragment = hash_fragment(hash);
-        uint64_t bucket = home_bucket;
-
-        while (true)
-        {
-            if ((metadata[bucket] & 0xF000) == fragment && compare(buckets[bucket], value))
-            {
-                return buckets.get_pointer(bucket);
-            }
-
-            uint16_t displacement = metadata[bucket] & 0x07FF;
-
-            if (displacement == 0x07FF)
-            {
-                return nullptr;
-            }
-
-            bucket = (home_bucket + quadratic(displacement)) & buckets_mask;
-        }
-    }
-
-    template<typename T>
     uint64_t HashTable<T>::bucket_ct() const noexcept
     {
         return buckets_mask + (bool)buckets_mask;
-    }
-
-    template<typename T>
-    T* HashTable<T>::insert(T& value, bool unique) noexcept
-    {
-        uint64_t hash = hash_key(value);
-        uint16_t fragment = hash_fragment(hash);
-        uint64_t home_bucket = hash & buckets_mask;
-
-        bool bucket_exists = metadata[home_bucket] & 0x0800;
-
-        if (!bucket_exists)
-        {
-            if (key_ct + 1 > bucket_ct() * 0.6)
-            {
-                return nullptr;
-            }
-
-            if (metadata[home_bucket] != 0x0000)
-            {
-                bool evicted = evict(home_bucket);
-
-                if (!evicted) return nullptr;
-            }
-
-            buckets[home_bucket] = value;
-            metadata[home_bucket] = fragment | 0x0800 | 0x07FF;
-
-            key_ct += 1;
-
-            return &buckets[home_bucket];
-        }
-
-        if (!unique)
-        {
-            size_t bucket = home_bucket;
-
-            while (true)
-            {
-                if ((metadata[bucket] & 0xF000) == fragment && compare(buckets[bucket], value))
-                {
-                    return &buckets[bucket];
-                }
-
-                uint16_t displacement = metadata[bucket] & 0x07FF;
-
-                if (displacement == 0x07FF) break;
-
-                bucket = (home_bucket + quadratic(displacement)) & buckets_mask;
-            }
-        }
-
-        Location empty_location = find_first_empty_location(home_bucket);
-
-        if (!empty_location.exists) return nullptr;
-
-        uint64_t prev = find_insert_location(home_bucket, empty_location.displacement);
-
-        buckets[empty_location.buckets_offset] = value;
-
-        metadata[empty_location.buckets_offset] = fragment | (metadata[prev] & 0x07FF);
-        metadata[prev] = (metadata[prev] & ~0x07FF) | empty_location.displacement;
-
-        key_ct += 1;
-
-        return &buckets[empty_location.buckets_offset];
-    }
-
-    template<typename T>
-    Location HashTable<T>::find_first_empty_location(uint64_t home_bucket) noexcept
-    {
-        Location location =
-        {
-            .exists = false,
-            .displacement = 1,
-            .buckets_offset = 0,
-        };
-
-        uint64_t linear_displacement = 1;
-
-        while (true)
-        {
-            location.buckets_offset = (home_bucket + linear_displacement) & buckets_mask;
-
-            if (metadata[location.buckets_offset] == 0x0000)
-            {
-                location.exists = true;
-
-                return location;
-            }
-
-            if (++location.displacement == 0x07FF)
-            {
-                return location;
-            }
-
-            linear_displacement += location.displacement;
-        }
-    }
-
-    template<typename T>
-    uint64_t HashTable<T>::find_insert_location(uint64_t home_bucket, uint16_t displacement_to_empty) noexcept
-    {
-        size_t candidate = home_bucket;
-
-        while (true)
-        {
-            uint16_t displacement = metadata[candidate] & 0x07FF;
-
-            if (displacement > displacement_to_empty)
-            {
-                return candidate;
-            }
-
-            candidate = (home_bucket + quadratic(displacement)) & buckets_mask;
-        }
-    }
-
-    template<typename T>
-    bool HashTable<T>::evict(size_t bucket) noexcept
-    {
-        uint64_t home_bucket = hash_key(buckets[bucket]) & buckets_mask;
-
-        uint64_t previous = home_bucket;
-
-        while (true)
-        {
-            uint64_t next = (home_bucket + quadratic(metadata[previous] & 0x07FF)) & buckets_mask;
-
-            if (next == bucket) break;
-
-            previous = next;
-        }
-
-        metadata[previous] = (metadata[previous] & ~0x07FF) | (metadata[bucket] & 0x07FF);
-
-        Location empty_location = find_first_empty_location(home_bucket);
-
-        if (!empty_location.exists) return false;
-
-        previous = find_insert_location(home_bucket, empty_location.displacement);
-
-        buckets[empty_location.buckets_offset] = buckets[bucket];
-
-        metadata[empty_location.buckets_offset] = (metadata[bucket] & 0xF000) | (metadata[previous] & 0x07FF);
-        metadata[previous] = (metadata[previous] & ~0x07FF) | empty_location.displacement;
-
-        return true;
-    }
-
-    template<typename T>
-    struct HashTable<T>::Iterator
-    {
-        const HashTable<T>& _table;
-
-        T* _next;
-        uint64_t _index;
-        uint64_t _count;
-
-        explicit Iterator(const HashTable<T>& table) noexcept
-            : _next(nullptr), _table(table), _index(0), _count(0)
-        { }
-
-        [[nodiscard]] bool is_end() const noexcept
-        {
-            return _index >= _table.bucket_ct()
-                || _count >= _table.key_ct;
-        }
-
-        bool has_next() noexcept
-        {
-            if (is_end()) return false;
-
-            while (_index <= _table.buckets_mask)
-            {
-                if (_table.metadata[_index])
-                {
-                    _next = _table.buckets.get_pointer(_index);
-                    _index += 1, _count += 1;
-                    return true;
-                }
-
-                _index++;
-            }
-
-            return false;
-        }
-
-        void reset() noexcept
-        {
-            _next = 0;
-            _index = 0;
-            _count = 0;
-        }
-    };
-
-    template<typename T>
-    HashTable<T>::Iterator HashTable<T>::iterator() const noexcept
-    {
-        return Iterator(*this);
     }
 }
 
@@ -731,73 +421,87 @@ namespace nml
     { }
 
     template<typename T>
-    class HashSet<T>::Iterator
+    bool HashSet<T>::insert(const T& value) noexcept
     {
-        friend HashSet<T>;
-        hash_internal::HashTable<T>::Iterator _iterator;
-
-        explicit Iterator(const hash_internal::HashTable<T>& set) noexcept
-            : _iterator(set.iterator())
-        { }
-
-    public:
-
-        [[nodiscard]] inline bool is_end() const noexcept
-        {
-            return _iterator.is_end();
-        }
-
-        [[nodiscard]] inline T next() const noexcept
-        {
-            return *_iterator._next;
-        }
-
-        [[nodiscard]] inline bool has_next() noexcept
-        {
-            return _iterator.has_next();
-        }
-
-        inline void reset() noexcept
-        {
-            _iterator.reset();
-        }
-    };
-
-    template<typename T>
-    HashSet<T>::Iterator HashSet<T>::to_iterator() const noexcept
-    {
-        return Iterator(_table);
+        return _table.insert(value);
     }
 
     template<typename T>
-    inline bool HashSet<T>::contains(T& value) noexcept
+    bool HashSet<T>::remove(const T& value) noexcept
     {
-        return _table.find(value) != nullptr;
+        return _table.remove(value);
     }
 
     template<typename T>
-    bool HashSet<T>::insert(T value) noexcept
+    bool HashSet<T>::contains(const T& value) const noexcept
     {
-        while (true)
-        {
-            bool inserted = _table.insert(value, false) != nullptr;
-
-            if (inserted) return true;
-
-            _table.resize();
-        }
-    }
-
-    template<typename T>
-    bool HashSet<T>::remove(const T &value) noexcept
-    {
-        return false;
+        return _table.contains(value);
     }
 
     template<typename T>
     uint64_t HashSet<T>::count() const noexcept
     {
         return _table.key_ct;
+    }
+
+    template<typename T>
+    class HashSet<T>::Iterator
+    {
+        friend HashSet<T>;
+        const hash_internal::HashTable<T>& _table;
+
+        uint64_t _position;
+
+        explicit Iterator(const hash_internal::HashTable<T>& table, uint64_t position = 0) noexcept
+            : _table(table), _position(position)
+        {
+            if (_position < _table.entries.length && _table.entries[_position].offset == hash_internal::AVAILABLE)
+            {
+                ++(*this);
+            }
+        }
+
+    public:
+
+        Iterator begin() const { return Iterator(_table, 0); }
+        Iterator end() const { return Iterator(_table, _table.entries.length); }
+
+        Iterator& operator++()
+        {
+            while (++_position < _table.entries.length)
+            {
+                if (_table.entries[_position].offset != hash_internal::AVAILABLE) return *this;
+            };
+
+            return *this;
+        }
+
+        const T& operator*() const
+        {
+            return _table.entries[_position].data;
+        }
+
+        bool operator==(const Iterator& rhs) const
+        {
+            return _position == rhs._position;
+        }
+
+        bool operator!=(const Iterator& rhs) const
+        {
+            return _position != rhs._position;
+        }
+    };
+
+    template<typename T>
+    typename HashSet<T>::Iterator HashSet<T>::end() const noexcept
+    {
+        return Iterator(_table, _table.entries.length);
+    }
+
+    template<typename T>
+    typename HashSet<T>::Iterator HashSet<T>::begin() const noexcept
+    {
+        return Iterator(_table);
     }
 }
 
@@ -813,7 +517,7 @@ namespace nml
     { }
 
     template<typename TKey, typename TValue>
-    uint64_t HashMap<TKey, TValue>::count() noexcept
+    uint64_t HashMap<TKey, TValue>::count() const noexcept
     {
         return _table.key_ct;
     }
@@ -821,7 +525,11 @@ namespace nml
     template<typename TKey, typename TValue>
     bool HashMap<TKey, TValue>::remove(const TKey& key) noexcept
     {
-        return false;
+        std::pair<TKey, TValue> pair;
+
+        pair.first = key;
+
+        return _table.remove(pair);
     }
 
     template<typename TKey, typename TValue>
@@ -851,31 +559,21 @@ namespace nml
     }
 
     template<typename TKey, typename TValue>
-    TValue& HashMap<TKey, TValue>::insert(const TKey& key, const TValue& value) noexcept
+    TValue* HashMap<TKey, TValue>::insert(const TKey& key, const TValue& value) noexcept
     {
         auto pair = std::pair<TKey, TValue>(key, value);
 
-        while (true)
-        {
-            auto inserted = _table.insert(pair, false);
-
-            if (inserted != nullptr)
-            {
-                return inserted->second;
-            }
-
-            _table.resize();
-        }
+        return &(_table.insert_return(pair)->second);
     }
 
     template<typename TKey, typename TValue>
-    bool HashMap<TKey, TValue>::contains_key(const TKey& key) noexcept
+    bool HashMap<TKey, TValue>::contains_key(const TKey& key) const noexcept
     {
         std::pair<TKey, TValue> pair;
 
         pair.first = key;
 
-        return _table.find(pair) != nullptr;
+        return _table.contains(pair);
     }
 
     template<typename TKey, typename TValue>
@@ -897,6 +595,66 @@ namespace nml
             value_out = &(out->second);
             return true;
         }
+    }
+
+    template<typename TKey, typename TValue>
+    class HashMap<TKey, TValue>::Iterator
+    {
+        friend HashMap<TKey, TValue>;
+        const hash_internal::HashTable<std::pair<TKey, TValue>>& _table;
+
+        uint64_t _position;
+
+        explicit Iterator(const hash_internal::HashTable<std::pair<TKey, TValue>>& table, uint64_t position = 0) noexcept
+            : _table(table), _position(position)
+        {
+            if (_position < _table.entries.length && _table.entries[_position].offset == hash_internal::AVAILABLE)
+            {
+                ++(*this);
+            }
+        }
+
+    public:
+
+        [[nodiscard]] Iterator begin() const { return Iterator(_table, 0); }
+        [[nodiscard]] Iterator end() const { return Iterator(_table, _table.entries.length); }
+
+        Iterator& operator++()
+        {
+            while (++_position < _table.entries.length)
+            {
+                if (_table.entries[_position].offset != hash_internal::AVAILABLE) return *this;
+            };
+
+            return *this;
+        }
+
+        const std::pair<TKey, TValue>& operator*() const
+        {
+            return _table.entries[_position].data;
+        }
+
+        bool operator==(const Iterator& rhs) const
+        {
+            return _position == rhs._position;
+        }
+
+        bool operator!=(const Iterator& rhs) const
+        {
+            return _position != rhs._position;
+        }
+    };
+
+    template<typename TKey, typename TValue>
+    typename HashMap<TKey, TValue>::Iterator HashMap<TKey, TValue>::begin() const noexcept
+    {
+        return Iterator(_table);
+    }
+
+    template<typename TKey, typename TValue>
+    typename HashMap<TKey, TValue>::Iterator HashMap<TKey, TValue>::end() const noexcept
+    {
+        return Iterator(_table, _table.entries.length);
     }
 }
 

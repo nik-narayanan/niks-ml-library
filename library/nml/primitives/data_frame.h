@@ -127,7 +127,6 @@ namespace nml
         ResizableList<Column> _columns;
         ResizableList<uint32_t> _column_shifts;
 
-
         uint32_t find_next_column_offset() noexcept;
         void throw_if_column_name_taken(const char* name);
         void throw_if_column_name_taken(Span<const char>);
@@ -168,7 +167,7 @@ namespace nml::dataframe_internal
 
         char string[OVERFLOW_STRING_LENGTH];
 
-        inline void initialize() noexcept
+        void initialize() noexcept
         {
             overflow_index = 0;
         }
@@ -181,14 +180,15 @@ namespace nml::dataframe_internal
     public:
 
         struct Iterator;
+        struct Container;
 
         explicit StringManager(uint64_t initial_capacity = 0) noexcept
             : _overflow(Allocator<StringOverflow>(initial_capacity))
         { }
 
-        inline void reset() noexcept;
+        void reset() noexcept;
 
-        inline void return_node(uint32_t index) noexcept;
+        void return_node(uint32_t index) noexcept;
         [[nodiscard]] inline uint64_t get_next_available_node_index() noexcept;
         [[nodiscard]] inline StringOverflow& get_node(uint64_t index) noexcept;
 
@@ -197,7 +197,8 @@ namespace nml::dataframe_internal
         void set_string(String& destination, const char* value) noexcept;
         void set_string(String& destination, Span<const char> value) noexcept;
 
-        inline Iterator get_iterator(String& string) noexcept;
+        Container container(String& string) noexcept;
+        Iterator get_iterator(String& string) noexcept;
         void string_copy(String& base_string, char* buffer) noexcept;
     };
 
@@ -210,9 +211,9 @@ namespace nml::dataframe_internal
         StringManager* _manager;
         StringOverflow* _current_overflow;
 
-        explicit Iterator(String* string, StringManager* manager)
+        explicit Iterator(String* string, StringManager* manager, uint64_t index = 0)
             : _string(string), _manager(manager)
-            , _index(0), _overflow(-1), _current_overflow(nullptr)
+            , _index(index), _overflow(-1), _current_overflow(nullptr)
         { }
 
         [[nodiscard]] inline int64_t length() const noexcept
@@ -260,6 +261,27 @@ namespace nml::dataframe_internal
             _index = 0, _current_overflow = nullptr;
         }
 
+        Iterator& operator++()
+        {
+            if (is_end()) return *this;
+
+            if (_index < COLUMN_STRING_LENGTH)
+            {
+                _next = _string->string[_index++];
+
+                return *this;
+            }
+
+            if ((_index - COLUMN_STRING_LENGTH) / OVERFLOW_STRING_LENGTH > _overflow)
+            {
+                _current_overflow = &_manager->get_node(_current_overflow->overflow_index);
+            }
+
+            _next = _current_overflow->string[(_index - 1 - COLUMN_STRING_LENGTH) % OVERFLOW_STRING_LENGTH];
+
+            return *this;
+        }
+
         inline std::string to_std_string() noexcept
         {
             auto copy = *this;
@@ -275,11 +297,76 @@ namespace nml::dataframe_internal
 
             return string;
         }
+
+        const char& operator*() const
+        {
+            return _next;
+        }
+
+        bool operator==(const Iterator& rhs) const
+        {
+            return _index == rhs._index;
+        }
+
+        bool operator!=(const Iterator& rhs) const
+        {
+            return _index != rhs._index;
+        }
     };
 
     StringManager::Iterator StringManager::get_iterator(String& string) noexcept
     {
         return StringManager::Iterator(&string, this);
+    }
+
+    struct StringManager::Container
+    {
+        String* _string;
+        StringManager* _manager;
+
+        explicit Container(String* string, StringManager* manager)
+            : _string(string), _manager(manager)
+        { }
+
+        [[nodiscard]] Iterator begin() const noexcept
+        {
+            return StringManager::Iterator(_string, _manager);
+        }
+
+        [[nodiscard]] Iterator end() const noexcept
+        {
+            return StringManager::Iterator(_string, _manager, _string->length);
+        }
+
+        bool operator==(const Container& rhs) const
+        {
+            if (_string->length != rhs._string->length) return false;
+
+            for (Iterator l = begin(), r = rhs.begin(); l != end() && r != rhs.end(); ++l, ++r)
+            {
+                if (l._next != r._next) return false;
+            }
+
+            return true;
+        }
+
+        [[nodiscard]] uint64_t hash() const noexcept
+        {
+            uint64_t hash = 0xCBF29CE484222325;
+
+            for (const unsigned char byte : *this)
+            {
+                hash ^= static_cast<uint64_t>(byte);
+                hash *= 0x100000001B3;
+            }
+
+            return hash;
+        }
+    };
+
+    StringManager::Container StringManager::container(String& string) noexcept
+    {
+        return StringManager::Container(&string, this);
     }
 
     void StringManager::string_copy(String& base_string, char* buffer) noexcept
@@ -506,6 +593,17 @@ namespace nml::dataframe_internal
     }
 }
 
+namespace std
+{
+    template<> struct hash<nml::dataframe_internal::StringManager::Container>
+    {
+        size_t operator()(const nml::dataframe_internal::StringManager::Container& str) const noexcept
+        {
+            return str.hash();
+        }
+    };
+}
+
 /*******************************************************************************************************************
  VALUE
  ******************************************************************************************************************/
@@ -690,6 +788,7 @@ namespace nml
             return string.to_subspan_unsafe(offset, end - offset);
         }
 
+        // TODO parsing is garbo
         static inline double parse_float(StringManager::Iterator& string)
         {
             double parsed = 0, adjustment = 0.1;
@@ -3365,7 +3464,7 @@ namespace nml
 
         auto& factorized_column = get_raw_column_unsafe(factorized_column_offset);
 
-        auto _distinct = HashMap<Iterator<char, StringManager::Iterator>, uint64_t>();
+        auto _distinct = HashMap<StringManager::Container, uint64_t>();
 
         String* strings = column_root.get_values_string();
 
@@ -3373,19 +3472,17 @@ namespace nml
         {
             if (column_root._is_nullable && column_root._null_index.check(i)) continue;
 
-            auto str = column_root._string_manager->get_iterator(strings[i]);
-
-            auto iterator = Iterator<char, StringManager::Iterator>(str);
+            auto container = column_root._string_manager->container(strings[i]);
 
             uint64_t starting_ct = _distinct.count();
 
-            uint64_t mapping = _distinct.insert(iterator, starting_ct);
+            uint64_t value = *_distinct.insert(container, starting_ct);
 
-            factorized_column.set(i, static_cast<int64_t>(mapping));
+            factorized_column.set(i, static_cast<int64_t>(value));
 
-            if (distinct != nullptr && starting_ct == mapping)
+            if (distinct != nullptr && value == starting_ct)
             {
-                distinct->add(mapping);
+                distinct->add(static_cast<int64_t>(value));
             }
         }
 
@@ -3402,6 +3499,10 @@ namespace nml
 
     void DataFrame::print(uint64_t rows)
     {// TODO this is nasty
+
+        std::cout << "row ct: " << row_count() << ", ";
+        std::cout << "column ct: " << column_count() << "\n";
+
         const char* default_column_name = "Column: ";
 
         rows = rows == 0 ? _row_count : std::min(rows, _row_count);
@@ -3552,9 +3653,6 @@ namespace nml
         }
 
         std::cout << "\n";
-
-        std::cout << "row ct: " << row_count() << ", ";
-        std::cout << "column ct: " << column_count() << "\n";
     }
 }
 

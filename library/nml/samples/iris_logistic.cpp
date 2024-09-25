@@ -20,6 +20,8 @@ int main()
 
     df.factorize_column_with_distinct(dependent, "variety_int", &distinct, 0);
 
+    df.print(5);
+
     df.remove_column("variety");
 
     MatrixOwner matrix = df.to_matrix();
@@ -49,5 +51,5 @@ int main()
 
     regression.summary(matrix.to_span()).print(); // TODO
 
-    return 1;
+    return 0;
 }

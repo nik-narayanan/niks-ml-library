@@ -9,6 +9,7 @@
 #include <algorithm>
 
 #include "random.h"
+#include "memory_span.h"
 
 namespace nml
 {

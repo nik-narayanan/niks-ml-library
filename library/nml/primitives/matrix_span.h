@@ -568,11 +568,9 @@ namespace nml
 
         auto labels = StaticList<float>(set.count());
 
-        auto iterator = set.to_iterator();
-
-        while (iterator.has_next())
+        for (float label : set)
         {
-            labels.add(iterator.next());
+            labels.add(label);
         }
 
         return labels;

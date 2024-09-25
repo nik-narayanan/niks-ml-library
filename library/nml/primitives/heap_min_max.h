@@ -15,23 +15,23 @@ namespace nml
     class MinMaxHeap
     {
         TValue* _heap;
-        unsigned _size;
-        unsigned _capacity;
+        uint64_t _size{};
+        uint64_t _capacity{};
 
     public:
 
-        explicit MinMaxHeap(MemorySpan memory, unsigned capacity = 0) noexcept
+        explicit MinMaxHeap(MemorySpan memory, uint64_t capacity = 0) noexcept
             : _size(0)
             , _heap(memory.get_pointer<TValue>(0))
             , _capacity(capacity == 0 ? memory.bytes / sizeof(TValue) : capacity)
         { }
 
-        static inline unsigned required_bytes(unsigned queue_size) noexcept { return queue_size * sizeof(TValue); }
+        static inline uint64_t required_bytes(uint64_t queue_size) noexcept { return queue_size * sizeof(TValue); }
 
         void print() const;
         void clear() noexcept { _size = 0; }
-        [[nodiscard]] unsigned size() const noexcept { return _size; }
-        [[nodiscard]] unsigned memory_size() const noexcept { return sizeof(TValue) * _capacity; }
+        [[nodiscard]] uint64_t size() const noexcept { return _size; }
+        [[nodiscard]] uint64_t memory_size() const noexcept { return sizeof(TValue) * _capacity; }
 
         void insert_min(TValue value) noexcept;
         void insert_max(TValue value) noexcept;
@@ -52,16 +52,16 @@ namespace nml
 
     private:
 
-        void pull_up(unsigned index) noexcept;
-        void push_down(unsigned index) noexcept;
-        void delete_element(unsigned index) noexcept;
+        void pull_up(uint64_t index) noexcept;
+        void push_down(uint64_t index) noexcept;
+        void delete_element(uint64_t index) noexcept;
 
-        unsigned find_min_index() noexcept;
-        static bool is_min_level(unsigned index) noexcept;
-        static inline unsigned left_child_index(unsigned index) noexcept { return 2 * index + 1; }
-        static inline unsigned right_child_index(unsigned index) noexcept { return 2 * index + 2; }
-        static inline unsigned parent_index(unsigned index) noexcept { return index == 0 ? 0 : (index - 1) / 2; }
-        static inline unsigned grandparent_index(unsigned index) noexcept { return parent_index(parent_index(index)); }
+        uint64_t find_min_index() noexcept;
+        static bool is_min_level(uint64_t index) noexcept;
+        static inline uint64_t left_child_index(uint64_t index) noexcept { return 2 * index + 1; }
+        static inline uint64_t right_child_index(uint64_t index) noexcept { return 2 * index + 2; }
+        static inline uint64_t parent_index(uint64_t index) noexcept { return index == 0 ? 0 : (index - 1) / 2; }
+        static inline uint64_t grandparent_index(uint64_t index) noexcept { return parent_index(parent_index(index)); }
     };
 
     template<typename TValue>
@@ -163,7 +163,7 @@ namespace nml
     }
 
     template<typename TValue>
-    void MinMaxHeap<TValue>::delete_element(unsigned index) noexcept
+    void MinMaxHeap<TValue>::delete_element(uint64_t index) noexcept
     {
         if(index >= _size) return;
 
@@ -178,11 +178,11 @@ namespace nml
     }
 
     template<typename TValue>
-    void MinMaxHeap<TValue>::pull_up(unsigned index) noexcept
+    void MinMaxHeap<TValue>::pull_up(uint64_t index) noexcept
     {
         if (index == 0) return;
 
-        unsigned parent = parent_index(index);
+        uint64_t parent = parent_index(index);
 
         bool is_max_level = !is_min_level(index);
 
@@ -207,16 +207,16 @@ namespace nml
     }
 
     template<typename TValue>
-    void MinMaxHeap<TValue>::push_down(unsigned index) noexcept
+    void MinMaxHeap<TValue>::push_down(uint64_t index) noexcept
     {
         bool is_max_level = !is_min_level(index);
 
         while (true)
         {
-            unsigned smallest = index;
-            unsigned left = left_child_index(index);
-            unsigned right = right_child_index(index);
-            unsigned grandchild_index = left_child_index(left);
+            uint64_t smallest = index;
+            uint64_t left = left_child_index(index);
+            uint64_t right = right_child_index(index);
+            uint64_t grandchild_index = left_child_index(left);
 
             if (left < _size && (_heap[left] < _heap[smallest]) ^ is_max_level)
             {
@@ -228,7 +228,7 @@ namespace nml
                 smallest = right;
             }
 
-            for (unsigned int i = 0; i < 4 && grandchild_index + i < _size; ++i)
+            for (uint64_t i = 0; i < 4 && grandchild_index + i < _size; ++i)
             {
                 if ((_heap[grandchild_index + i] < _heap[smallest]) ^ is_max_level)
                 {
@@ -256,11 +256,11 @@ namespace nml
         }
     }
 
-    static inline unsigned log2(unsigned index) noexcept
+    static inline uint64_t log2(uint64_t index) noexcept
     {
         if (index == 0) return 0;
 
-        unsigned int result = 0;
+        uint64_t result = 0;
 
         while (index)
         {
@@ -272,13 +272,13 @@ namespace nml
     }
 
     template<typename TValue>
-    unsigned MinMaxHeap<TValue>::find_min_index() noexcept
+    uint64_t MinMaxHeap<TValue>::find_min_index() noexcept
     {
         return _size == 1 ? 0 : (_size == 2 || _heap[1] < _heap[2] ? 1 : 2);
     }
 
     template<typename TValue>
-    bool MinMaxHeap<TValue>::is_min_level(unsigned index) noexcept
+    bool MinMaxHeap<TValue>::is_min_level(uint64_t index) noexcept
     {
         return log2(index + 1) % 2 == 1;
     }
@@ -288,7 +288,7 @@ namespace nml
     {
         std::cout << "{";
 
-        for (unsigned i = 0; i < _size; ++i)
+        for (uint64_t i = 0; i < _size; ++i)
         {
             if (i > 0) std::cout << ", ";
             std::cout << _heap[i];
@@ -300,7 +300,7 @@ namespace nml
     template<typename TValue>
     bool MinMaxHeap<TValue>::contains(TValue value) const noexcept // TODO
     {
-        for (unsigned i = 0; i < _heap; ++i)
+        for (uint64_t i = 0; i < _heap; ++i)
         {
             if (_heap[i] == value) return true;
         }

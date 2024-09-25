@@ -13,11 +13,12 @@ namespace nml
     template<typename T>
     class Span
     {
+        class Iterator;
         T* _values;
 
     public:
 
-        uint64_t length;
+        uint64_t length{};
 
         Span() noexcept : _values(nullptr), length(0) { }
 
@@ -44,7 +45,6 @@ namespace nml
         T& operator[](unsigned offset) noexcept { return _values[offset]; }
         const T& operator[](unsigned offset) const noexcept { return _values[offset]; }
 
-        [[nodiscard]] T* get_end() const { return &_values[length]; }
         [[nodiscard]] T* get_pointer(const unsigned offset = 0) const { return &_values[offset]; }
 
         template<typename TPtr> [[nodiscard]] TPtr* get_pointer(const unsigned offset) const { return reinterpret_cast<TPtr*>(&_values[offset]); }
@@ -53,6 +53,41 @@ namespace nml
 
         [[nodiscard]] Span<T> to_subspan_unsafe(const unsigned offset) const { return Span<T>(_values + offset, length - offset); }
         [[nodiscard]] Span<T> to_subspan_unsafe(const unsigned start, const unsigned sub_length) const { return Span<T>(_values + start, sub_length); }
+
+        [[nodiscard]] Iterator begin() const noexcept;
+        [[nodiscard]] Iterator end() const noexcept;
+
+        [[nodiscard]] uint64_t hash() const noexcept
+        {
+            std::hash<T> hasher{};
+            uint64_t hash = 0xCBF29CE484222325;
+
+            for (uint64_t offset = 0; offset < length; ++offset)
+            {
+                hash ^= hasher(_values[offset]);
+                hash *= 0x100000001B3;
+            }
+
+            return hash;
+        }
+
+        bool operator==(const Span<T>& other) const noexcept
+        {
+            if (length != other.length) return false;
+            if (_values == other._values) return true;
+
+            for (uint64_t offset = 0; offset < length; ++offset)
+            {
+                if (_values[offset] != other[offset]) return false;
+            }
+
+            return true;
+        }
+
+        bool operator!=(const Span<T>& other) const
+        {
+            return !(*this == other);
+        }
 
         void print(const char* separator = ", ", bool terminate_line = true) const
         {
@@ -65,6 +100,58 @@ namespace nml
             if (terminate_line) std::cout << std::endl;
         }
     };
+
+    template<typename T>
+    class Span<T>::Iterator
+    {
+        Span<T> _span;
+        uint64_t _position{};
+
+    public:
+
+        explicit Iterator(Span<T> span, uint64_t position = 0)
+            : _span(span), _position(position)
+        { }
+
+        Iterator begin() const { return Iterator(_span, 0); }
+        Iterator end() const { return Iterator(_span, _span.bytes); }
+
+        Iterator& operator++()
+        {
+            ++_position;
+
+            return *this;
+        }
+
+        const T& operator*() const
+        {
+            return *_span.get_pointer(_position);
+        }
+
+        bool operator==(const Iterator& rhs) const
+        {
+            return _position == rhs._position;
+        }
+
+        bool operator!=(const Iterator& rhs) const
+        {
+            return _position != rhs._position;
+        }
+    };
+
+    template<typename T>
+    typename Span<T>::Iterator Span<T>::begin() const noexcept
+    {
+        return Span<T>::Iterator(*this);
+    }
+
+    template<typename T>
+    typename Span<T>::Iterator Span<T>::end() const noexcept
+    {
+        return Span<T>::Iterator(*this, length);
+    }
 }
+
+namespace std { template<typename T> struct hash<nml::Span<T>> { size_t operator()(const nml::Span<T>& span) const noexcept { return span.hash(); } }; }
 
 #endif //NML_SPAN_H

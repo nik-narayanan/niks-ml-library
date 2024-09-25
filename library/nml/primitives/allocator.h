@@ -5,7 +5,6 @@
 #ifndef NML_ALLOCATOR_H
 #define NML_ALLOCATOR_H
 
-#include "list.h"
 #include "heap.h"
 
 namespace nml
@@ -93,16 +92,16 @@ namespace nml
 
     private:
 
-        char* _memory;
-        uint64_t _capacity;
+        char* _memory{};
+        uint64_t _capacity{};
 
-        Span<T> _elements;
-        Heap<uint64_t, true> _available_indexes;
+        Span<T> _elements{};
+        Heap<uint64_t, true> _available_indexes{};
 
         struct MemoryLayout
         {
-            uint64_t heap_bytes;
-            uint64_t element_bytes;
+            uint64_t heap_bytes{};
+            uint64_t element_bytes{};
 
             inline uint64_t total_bytes() noexcept { return heap_bytes + element_bytes; }
         };

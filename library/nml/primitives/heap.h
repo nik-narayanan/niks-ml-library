@@ -13,16 +13,16 @@ namespace nml
     class Heap
     {
         TValue* _heap;
-        unsigned _size;
-        unsigned _capacity;
+        uint64_t _size{};
+        uint64_t _capacity{};
 
     public:
 
         Heap() noexcept : _heap(nullptr), _size(0), _capacity(0) { };
-        explicit Heap(MemorySpan memory, unsigned size = 0) noexcept;
-        [[nodiscard]] inline unsigned size() const noexcept { return _size; }
-        inline constexpr unsigned bytes() noexcept { return _capacity * sizeof(TValue); }
-        static inline constexpr unsigned required_bytes(unsigned capacity) noexcept { return capacity * sizeof(TValue); }
+        explicit Heap(MemorySpan memory, uint64_t size = 0) noexcept;
+        [[nodiscard]] inline uint64_t size() const noexcept { return _size; }
+        inline constexpr uint64_t bytes() noexcept { return _capacity * sizeof(TValue); }
+        static inline constexpr uint64_t required_bytes(uint64_t capacity) noexcept { return capacity * sizeof(TValue); }
 
         TValue pop() noexcept;
         TValue peek() noexcept;
@@ -36,28 +36,28 @@ namespace nml
 
     private:
 
-        static inline unsigned parent_index(unsigned index) noexcept { return (index - 1) / 2; }
-        static inline unsigned left_child_index(unsigned index) noexcept { return 2 * index + 1; }
-        static inline unsigned right_child_index(unsigned index) noexcept { return 2 * index + 2; }
+        static inline uint64_t parent_index(uint64_t index) noexcept { return (index - 1) / 2; }
+        static inline uint64_t left_child_index(uint64_t index) noexcept { return 2 * index + 1; }
+        static inline uint64_t right_child_index(uint64_t index) noexcept { return 2 * index + 2; }
 
-        void heapify(unsigned index);
+        void heapify(uint64_t index);
     };
 
     template<typename TValue, bool MinHeap>
-    Heap<TValue, MinHeap>::Heap(MemorySpan memory, unsigned size) noexcept
+    Heap<TValue, MinHeap>::Heap(MemorySpan memory, uint64_t size) noexcept
         : _size(size)
         , _capacity(memory.bytes / sizeof(TValue))
         , _heap(memory.get_pointer<TValue>(0))
     { }
 
     template<typename TValue, bool MinHeap>
-    void Heap<TValue, MinHeap>::heapify(unsigned index)
+    void Heap<TValue, MinHeap>::heapify(uint64_t index)
     {
         while (true)
         {
-            unsigned left = left_child_index(index);
-            unsigned right = right_child_index(index);
-            unsigned largest = index;
+            uint64_t left = left_child_index(index);
+            uint64_t right = right_child_index(index);
+            uint64_t largest = index;
 
             if (left < _size && (_heap[left] > _heap[largest]) ^ MinHeap)
             {
@@ -100,7 +100,7 @@ namespace nml
 
         _heap[_size] = value;
 
-        unsigned index = _size++;
+        uint64_t index = _size++;
 
         while (index > 0 && (_heap[parent_index(index)] < _heap[index]) ^ MinHeap)
         {
@@ -114,7 +114,7 @@ namespace nml
     {
         std::cout << "{";
 
-        for (unsigned i = 0; i < _size; ++i)
+        for (uint64_t i = 0; i < _size; ++i)
         {
             if (i > 0) std::cout << ", ";
             std::cout << _heap[i];

@@ -8,6 +8,27 @@
 #include "span.h"
 #include "memory_span.h"
 
+#if defined(_MSC_VER)
+#include <intrin.h>
+    #define COUNT_LEADING_ZEROS(x) _lzcnt_u32(x)
+#elif defined(__GNUC__) || defined(__clang__)
+    #define COUNT_LEADING_ZEROS(x) __builtin_clz(x)
+#endif
+
+#if defined(_MSC_VER)
+#include <intrin.h>
+    #define COUNT_TRAILING_ZEROS(x) _tzcnt_u32(x)
+#elif defined(__GNUC__) || defined(__clang__)
+    #define COUNT_TRAILING_ZEROS(x) __builtin_ctz(x)
+#endif
+
+#if defined(_MSC_VER)
+#include <intrin.h>
+    #define POP_COUNT(x) __popcnt64(x)
+#elif defined(__GNUC__) || defined(__clang__)
+    #define POP_COUNT(x) __builtin_popcountll(x)
+#endif
+
 namespace nml
 {
     class Bitset
@@ -33,17 +54,9 @@ namespace nml
 
         inline bool any() noexcept
         {
-            char* start = _memory.get_pointer();
-            const char* end = _memory.get_end();
-
-            while (start < end)
+            for (const char byte : _memory)
             {
-                if (*start != 0)
-                {
-                    return true;
-                }
-
-                start++;
+                if (byte != 0) return true;
             }
 
             return false;

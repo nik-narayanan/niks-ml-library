@@ -472,9 +472,9 @@ namespace nml
 
         working_matrix.working_required_bytes = std::max(working_matrix.working_required_bytes, working_pairs.total_bytes());
 
-        unsigned adam_state = get_initial_adam_state_required_memory(request);
-        unsigned point_distances = request.data.column_ct * sizeof(float);
-        unsigned iteration_memory = working_pairs.result_required_bytes + adam_state + point_distances;
+        uint64_t adam_state = get_initial_adam_state_required_memory(request);
+        uint64_t point_distances = request.data.column_ct * sizeof(float);
+        uint64_t iteration_memory = working_pairs.result_required_bytes + adam_state + point_distances;
 
         working_matrix.working_required_bytes = std::max(working_matrix.working_required_bytes, iteration_memory);
 

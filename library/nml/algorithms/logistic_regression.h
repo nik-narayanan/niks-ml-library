@@ -65,7 +65,7 @@ namespace nml
 
             uint16_t max_iteration_ct = 100;
             uint16_t retained_iteration_ct = 8;
-            float convergence_threshold = 1e-6;
+            float convergence_threshold = 1e-4;
             float rounding_tolerance = 1.0e-10;
 
             float line_search_min_step_size = 1e-20;

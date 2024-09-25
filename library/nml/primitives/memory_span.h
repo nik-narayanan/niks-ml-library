@@ -9,20 +9,29 @@
 #define alloca(upper_limit) __builtin_alloca((upper_limit))
 #endif // !alloca
 
+#include <string_view>
+
 namespace nml
 {
     class MemorySpan
     {
+        class Iterator;
         char* _memory;
 
     public:
 
         const uint64_t bytes;
 
-        explicit MemorySpan(void* memory, const uint64_t bytes) noexcept
-            : bytes(bytes)
-            , _memory(static_cast<char*>(memory))
+        explicit MemorySpan(const uint64_t bytes) noexcept
+            : bytes(bytes), _memory(static_cast<char*>(std::malloc(bytes)))
         { }
+
+        explicit MemorySpan(void* memory, const uint64_t bytes) noexcept
+            : bytes(bytes), _memory(static_cast<char*>(memory))
+        { }
+
+        Iterator begin() const noexcept;
+        Iterator end() const noexcept;
 
         [[nodiscard]] void* get_pointer(const uint64_t byte_offset = 0) const noexcept
         {
@@ -48,7 +57,79 @@ namespace nml
         {
             memset(_memory, 0, bytes);
         }
+
+        inline void fill(char value) noexcept
+        {
+            memset(_memory, value, bytes);
+        }
+
+        bool operator==(const MemorySpan& other) const noexcept
+        {
+            if (bytes != other.bytes) return false;
+            if (_memory == other._memory) return true;
+
+            return std::equal(_memory, _memory + bytes, other._memory);
+        }
+
+        bool operator!=(const MemorySpan& other) const noexcept
+        {
+            return !(*this == other);
+        }
+
+        uint64_t hash() const noexcept;
     };
+
+    class MemorySpan::Iterator
+    {
+        uint64_t _position;
+        MemorySpan _memory;
+
+    public:
+
+        explicit Iterator(MemorySpan memory, uint64_t position = 0)
+            : _memory(memory), _position(position)
+        { }
+
+        Iterator begin() const { return Iterator(_memory, 0); }
+        Iterator end() const { return Iterator(_memory, _memory.bytes); }
+
+        Iterator& operator++()
+        {
+            ++_position;
+
+            return *this;
+        }
+
+        const unsigned char operator*() const
+        {
+            return *_memory.get_pointer<unsigned char>(_position);
+        }
+
+        bool operator==(const Iterator& rhs) const
+        {
+            return _position == rhs._position;
+        }
+
+        bool operator!=(const Iterator& rhs) const
+        {
+            return _position != rhs._position;
+        }
+    };
+
+    MemorySpan::Iterator MemorySpan::begin() const noexcept
+    {
+        return MemorySpan::Iterator(*this);
+    }
+
+    MemorySpan::Iterator MemorySpan::end() const noexcept
+    {
+        return MemorySpan::Iterator(*this, bytes);
+    }
+
+    uint64_t MemorySpan::hash() const noexcept
+    {
+        return std::hash<std::string_view>{}(std::string_view(_memory, bytes));
+    }
 
     struct RequiredMemory
     {
@@ -82,5 +163,7 @@ namespace nml
         }
     };
 }
+
+namespace std { template<> struct hash<nml::MemorySpan> { size_t operator()(const nml::MemorySpan& ms) const noexcept { return ms.hash(); } }; }
 
 #endif //NML_MEMORY_SPAN_H

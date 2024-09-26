@@ -633,3 +633,4 @@ int main()
     return 0;
 }
 ```
+![alt text](images/hashset_benchmark.png)

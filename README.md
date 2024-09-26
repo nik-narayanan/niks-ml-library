@@ -583,27 +583,23 @@ int main()
 {
     char string[] = "string 1 | string 2 | string 3 | string 4 | string 5";
 
-    auto set = HashSet<Span<char>>();
+    auto set = HashSet<std::string_view>();
 
-    for (unsigned i = 0; i < 10; ++i)
+    for (int i = 0; i < 10; ++i)
     {
-        set.insert(Span<char>(string + 0, 8));
-        set.insert(Span<char>(string + 11, 8));
-        set.insert(Span<char>(string + 22, 8));
-        set.insert(Span<char>(string + 33, 8));
-        set.insert(Span<char>(string + 44, 8));
+        set.insert(std::string_view(string + 0, 8));
+        set.insert(std::string_view(string + 11, 8));
+        set.insert(std::string_view(string + 22, 8));
+        set.insert(std::string_view(string + 33, 8));
+        set.insert(std::string_view(string + 44, 8));
     }
 
     int ct = 0;
 
-    auto iterator = set.to_iterator();
-
-    while (iterator.has_next())
+    for (auto& value : set)
     {
-        auto next = iterator.next();
-
-        if (ct++ > 0) std::cout << ", ", next.print("", false);
-        else next.print("", false);
+        if (ct++ > 0) std::cout << ", ";
+        std::cout << value;
     }
 
     return 0;
@@ -618,21 +614,20 @@ using namespace nml;
 
 int main()
 {
-    auto map = HashMap<int32_t, uint32_t>();
+    auto map = HashMap<int, int>();
 
     for (int i = -10; i < 10; ++i)
     {
-        map.insert(i, map.count() * 2);
-        map.insert(i, map.count() * 2);
-        map.insert(i, map.count() * 2);
-        map.insert(i, map.count() * 2);
-        map.insert(i, map.count() * 2);
+        map.insert(i, map.count());
+        map.insert(i, map.count());
+        map.insert(i, map.count());
+        map.insert(i, map.count());
+        map.insert(i, map.count());
     }
 
-    for (int i = -10; i < 10; ++i)
+    for (auto& value : map)
     {
-        auto value = *map.get_value(i);
-        std::cout << value << std::endl;
+        std::cout << "Key: " << value.first << ", Value: " << value.second << std::endl;
     }
 
     return 0;

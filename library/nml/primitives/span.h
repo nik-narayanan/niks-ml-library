@@ -13,7 +13,6 @@ namespace nml
     template<typename T>
     class Span
     {
-        class Iterator;
         T* _values;
 
     public:
@@ -54,6 +53,7 @@ namespace nml
         [[nodiscard]] Span<T> to_subspan_unsafe(const unsigned offset) const { return Span<T>(_values + offset, length - offset); }
         [[nodiscard]] Span<T> to_subspan_unsafe(const unsigned start, const unsigned sub_length) const { return Span<T>(_values + start, sub_length); }
 
+        class Iterator;
         [[nodiscard]] Iterator begin() const noexcept;
         [[nodiscard]] Iterator end() const noexcept;
 
@@ -121,6 +121,11 @@ namespace nml
             ++_position;
 
             return *this;
+        }
+
+        T& operator*()
+        {
+            return *_span.get_pointer(_position);
         }
 
         const T& operator*() const

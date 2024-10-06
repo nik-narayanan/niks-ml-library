@@ -18,13 +18,13 @@ namespace nml
             const unsigned iterations;
             const unsigned over_samples;
 
-            explicit Request(const MatrixSpan& data, unsigned iterations = 5, unsigned over_samples = 10) noexcept
+            explicit Request(const MatrixSpan& data, unsigned iterations = 10, unsigned over_samples = 10) noexcept
                 : data(data), iterations(iterations), over_samples(over_samples)
             { }
         };
 
         static RequiredMemory required_memory(const Request& request) noexcept;
-        static NMLResult <MatrixSpan> compute(const Request& request, RequestMemory memory) noexcept;
+        static NMLResult<MatrixSpan> compute(const Request& request, RequestMemory memory) noexcept;
     };
 }
 

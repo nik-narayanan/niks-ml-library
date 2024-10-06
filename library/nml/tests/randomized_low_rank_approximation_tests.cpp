@@ -38,7 +38,7 @@ TEST(randomized_low_rank_approximation_tests, get_low_dimensional_projection)
 
     auto projection = projection_result.ok();
 
-    if (false) projection.print();
+    if (true) projection.print();
 
     ASSERT_TRUE(projection.equals(expected_matrix.to_span(), 1e-2));
 }

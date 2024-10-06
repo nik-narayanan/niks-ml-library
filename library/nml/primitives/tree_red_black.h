@@ -16,23 +16,12 @@ namespace nml
     {
         struct Node
         {
-            uint64_t left = 0;
-            uint64_t right = 0;
-            uint64_t parent = 0;
+            uint64_t left{0};
+            uint64_t right{0};
+            uint64_t parent{0};
 
-            T data;
-            bool is_red = true;
-
-            inline void initialize() noexcept
-            {
-                right = 0; parent = 0;
-                left = 0; is_red = true;
-            }
-
-            Node(Node&& other) = delete;
-            Node(const Node& other) = delete;
-            Node& operator=(Node&& other) = delete;
-            Node& operator=(const Node& other) = delete;
+            T data{};
+            bool is_red{true};
         };
 
         explicit RedBlackTree(uint64_t initial_capacity = 0) noexcept;
@@ -56,7 +45,7 @@ namespace nml
 
     private:
 
-        uint64_t _root_index;
+        uint64_t _root_index{0};
         Allocator<Node> _node_allocator;
 
         void _insert_adjust(uint64_t index) noexcept;

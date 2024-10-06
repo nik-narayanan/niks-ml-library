@@ -163,14 +163,9 @@ namespace nml::dataframe_internal
 
     struct StringOverflow
     {
-        uint32_t overflow_index;
+        uint32_t overflow_index{0};
 
-        char string[OVERFLOW_STRING_LENGTH];
-
-        void initialize() noexcept
-        {
-            overflow_index = 0;
-        }
+        char string[OVERFLOW_STRING_LENGTH]{0};
     };
 
     class StringManager
@@ -3084,7 +3079,7 @@ namespace nml
 
         throw_if_column_name_taken(name);
 
-        offset = std::min(offset, _column_shifts.count);
+        offset = std::min(offset, (uint32_t)_column_shifts.count);
 
         uint32_t next_column_offset = find_next_column_offset();
 

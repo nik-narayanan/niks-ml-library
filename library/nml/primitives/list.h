@@ -19,10 +19,13 @@ namespace nml
 
     public:
 
-        uint32_t count;
-        const uint32_t capacity;
+        uint64_t count{};
+        const uint64_t capacity{};
 
-        explicit StaticList(uint32_t capacity = 10) noexcept
+        Span<T>::Iterator begin() const { return to_span(0, count).begin(); }
+        Span<T>::Iterator end() const { return to_span(0, count).end(); }
+
+        explicit StaticList(uint64_t capacity = 10) noexcept
             : count(0)
             , capacity(capacity)
             , _values(static_cast<T*>(std::malloc(capacity * sizeof(T))))
@@ -46,12 +49,12 @@ namespace nml
             other.count = 0;
         }
 
-        T& operator[](uint32_t index) noexcept
+        T& operator[](uint64_t index) noexcept
         {
             return _values[index];
         }
 
-        const T& operator[](uint32_t index) const noexcept
+        const T& operator[](uint64_t index) const noexcept
         {
             return _values[index];
         }
@@ -67,7 +70,7 @@ namespace nml
             return Span<T>(_values, capacity);
         }
 
-        Span<T> to_span(uint32_t start, uint32_t length) const noexcept
+        Span<T> to_span(uint64_t start, uint64_t length) const noexcept
         {
             return Span<T>(_values + start * sizeof(T), length);
         }
@@ -77,7 +80,7 @@ namespace nml
             return MemorySpan(_values, count * sizeof(T));
         }
 
-        [[nodiscard]] MemorySpan to_memory(uint32_t length) const noexcept
+        [[nodiscard]] MemorySpan to_memory(uint64_t length) const noexcept
         {
             return MemorySpan(_values, length * sizeof(T));
         }
@@ -100,10 +103,13 @@ namespace nml
 
     public:
 
-        uint32_t count;
-        const uint32_t capacity;
+        uint64_t count{};
+        const uint64_t capacity{};
 
-        explicit StaticOwnerList(uint32_t capacity = 10) noexcept
+        Span<T>::Iterator begin() const { return to_span(0, count).begin(); }
+        Span<T>::Iterator end() const { return to_span(0, count).end(); }
+
+        explicit StaticOwnerList(uint64_t capacity = 10) noexcept
             : count(0)
             , capacity(capacity)
             , _values(static_cast<T*>(std::malloc(capacity * sizeof(T))))
@@ -111,7 +117,7 @@ namespace nml
 
         ~StaticOwnerList() noexcept
         {
-            for (uint32_t i = 0; i < count; ++i)
+            for (uint64_t i = 0; i < count; ++i)
             {
                 _values[i].~T();
             }
@@ -132,12 +138,12 @@ namespace nml
             other.count = 0;
         }
 
-        T& operator[](uint32_t index) noexcept
+        T& operator[](uint64_t index) noexcept
         {
             return _values[index];
         }
 
-        const T& operator[](uint32_t index) const noexcept
+        const T& operator[](uint64_t index) const noexcept
         {
             return _values[index];
         }
@@ -148,12 +154,18 @@ namespace nml
             return &_values[count++];
         }
 
+        T* add(T&& element) noexcept
+        {
+            new (&_values[count]) T(std::move(element));
+            return &_values[count++];
+        }
+
         Span<T> to_span() const noexcept
         {
             return Span<T>(_values, capacity);
         }
 
-        Span<T> to_span(uint32_t start, uint32_t length) const noexcept
+        Span<T> to_span(uint64_t start, uint64_t length) const noexcept
         {
             return Span<T>(_values + start * sizeof(T), length);
         }
@@ -163,7 +175,7 @@ namespace nml
             return MemorySpan(_values, count * sizeof(T));
         }
 
-        [[nodiscard]] MemorySpan to_memory(uint32_t length) const noexcept
+        [[nodiscard]] MemorySpan to_memory(uint64_t length) const noexcept
         {
             return MemorySpan(_values, length * sizeof(T));
         }
@@ -186,10 +198,13 @@ namespace nml
 
     public:
 
-        uint32_t count;
-        uint32_t capacity;
+        uint64_t count{};
+        uint64_t capacity{};
 
-        explicit ResizableList(uint32_t capacity = 10) noexcept
+        Span<T>::Iterator begin() const { return to_span(0, count).begin(); }
+        Span<T>::Iterator end() const { return to_span(0, count).end(); }
+
+        explicit ResizableList(uint64_t capacity = 10) noexcept
             : count(0)
             , capacity(capacity)
             , _values(static_cast<T*>(std::malloc(capacity * sizeof(T))))
@@ -220,17 +235,17 @@ namespace nml
             _values = static_cast<T*>(std::realloc(_values, capacity * sizeof(T)));
         }
 
-        T& operator[](uint32_t index) noexcept
+        T& operator[](uint64_t index) noexcept
         {
             return _values[index];
         }
 
-        const T& operator[](uint32_t index) const noexcept
+        const T& operator[](uint64_t index) const noexcept
         {
             return _values[index];
         }
 
-        uint32_t add(const T& element) noexcept
+        uint64_t add(const T& element) noexcept
         {
             if (count == capacity) resize();
             _values[count] = element;
@@ -252,7 +267,7 @@ namespace nml
             return Span<T>(_values, count);
         }
 
-        Span<T> to_span(uint32_t start, uint32_t length) const noexcept
+        Span<T> to_span(uint64_t start, uint64_t length) const noexcept
         {
             return Span(_values + start * sizeof(T), length);
         }
@@ -262,7 +277,7 @@ namespace nml
             return MemorySpan(_values, count * sizeof(T));
         }
 
-        [[nodiscard]] MemorySpan to_memory(uint32_t length) const noexcept
+        [[nodiscard]] MemorySpan to_memory(uint64_t length) const noexcept
         {
             return MemorySpan(_values, length * sizeof(T));
         }
@@ -275,10 +290,13 @@ namespace nml
 
     public:
 
-        uint32_t count;
-        uint32_t capacity;
+        uint64_t count{};
+        uint64_t capacity{};
 
-        explicit ResizableOwnerList(uint32_t capacity = 10) noexcept
+        Span<T>::Iterator begin() const { return to_span(0, count).begin(); }
+        Span<T>::Iterator end() const { return to_span(0, count).end(); }
+
+        explicit ResizableOwnerList(uint64_t capacity = 10) noexcept
             : count(0)
             , capacity(capacity)
             , _values(static_cast<T*>(std::malloc(capacity * sizeof(T))))
@@ -286,7 +304,7 @@ namespace nml
 
         ~ResizableOwnerList() noexcept
         {
-            for (uint32_t i = 0; i < count; ++i)
+            for (uint64_t i = 0; i < count; ++i)
             {
                 _values[i].~T();
             }
@@ -310,11 +328,11 @@ namespace nml
 
         void resize() noexcept
         {
-            uint32_t new_capacity = capacity * 2;
+            uint64_t new_capacity = capacity * 2;
 
             T* new_values = static_cast<T*>(std::malloc(new_capacity * sizeof(T)));
 
-            for (uint32_t i = 0; i < count; ++i)
+            for (uint64_t i = 0; i < count; ++i)
             {
                 new (new_values + i) T(std::move_if_noexcept(_values[i]));
                 _values[i].~T();
@@ -325,21 +343,27 @@ namespace nml
             _values = new_values, capacity = new_capacity;
         }
 
-        T& operator[](uint32_t index) noexcept
+        T& operator[](uint64_t index) noexcept
         {
             return _values[index];
         }
 
-        const T& operator[](uint32_t index) const noexcept
+        const T& operator[](uint64_t index) const noexcept
         {
             return _values[index];
         }
 
-        uint32_t add(const T& element) noexcept
+        uint64_t add(const T& element) noexcept
         {
             if (count == capacity) resize();
             new (_values + count) T(element);
             return count++;
+        }
+
+        T* add(T&& element) noexcept
+        {
+            new (&_values[count]) T(std::move(element));
+            return &_values[count++];
         }
 
         void pop() noexcept
@@ -350,7 +374,7 @@ namespace nml
 
         void reset() noexcept
         {
-            for (uint32_t i = 0; i < count; ++i)
+            for (uint64_t i = 0; i < count; ++i)
             {
                 _values[i].~T();
             }
@@ -363,7 +387,7 @@ namespace nml
             return Span<T>(_values, count);
         }
 
-        Span<T> to_span(uint32_t start, uint32_t length) const noexcept
+        Span<T> to_span(uint64_t start, uint64_t length) const noexcept
         {
             return Span(_values + start * sizeof(T), length);
         }
@@ -373,7 +397,7 @@ namespace nml
             return MemorySpan(_values, count * sizeof(T));
         }
 
-        [[nodiscard]] MemorySpan to_memory(uint32_t length) const noexcept
+        [[nodiscard]] MemorySpan to_memory(uint64_t length) const noexcept
         {
             return MemorySpan(_values, length * sizeof(T));
         }

@@ -21,6 +21,18 @@ namespace nml
     };
 }
 
+#ifndef M_PI
+#define M_PI 3.14159265358979311599796346854
+#endif
+
+#ifndef M_LN2
+#define M_LN2 0.69314718055994530942
+#endif
+
+#ifndef M_SQRT2
+#define M_SQRT2 1.41421356237309504880
+#endif
+
 namespace nml::cumulative_distribution_functions_internal // based off of https://github.com/wch/r-source/tree/trunk/src/nmath
 {
     const unsigned max_iteration_count = 1e7;

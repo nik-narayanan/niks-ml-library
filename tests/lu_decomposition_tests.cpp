@@ -6,10 +6,10 @@
 
 #include "datasets/test_data.h"
 
-#include "../primitives/file.h"
-#include "../primitives/memory_owner.h"
-#include "../primitives/matrix_owner.h"
-#include "../algorithms/lu_decomposition.h"
+#include "../library/nml/primitives/file.h"
+#include "../library/nml/primitives/memory_owner.h"
+#include "../library/nml/primitives/matrix_owner.h"
+#include "../library/nml/algorithms/lu_decomposition.h"
 
 using namespace nml;
 

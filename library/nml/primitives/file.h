@@ -26,6 +26,8 @@
 
 //#include "matrix_owner.h"
 
+#include <immintrin.h>
+
 namespace nml
 {
     struct DataReader

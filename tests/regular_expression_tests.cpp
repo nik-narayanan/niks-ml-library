@@ -4,7 +4,7 @@
 
 #include <gtest/gtest.h>
 
-#include "../primitives/regular_expressions.h"
+#include "../library/nml/primitives/regular_expressions.h"
 
 using namespace nml;
 

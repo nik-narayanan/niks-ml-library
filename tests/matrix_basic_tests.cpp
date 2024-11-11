@@ -6,10 +6,10 @@
 #include <gtest/gtest.h>
 #include "datasets/test_data.h"
 
-#include "../primitives/matrix_span.h"
-#include "../primitives/matrix_owner.h"
-#include "../primitives/file.h"
-#include "../primitives/span.h"
+#include "../library/nml/primitives/matrix_span.h"
+#include "../library/nml/primitives/matrix_owner.h"
+#include "../library/nml/primitives/file.h"
+#include "../library/nml/primitives/span.h"
 
 using namespace nml;
 

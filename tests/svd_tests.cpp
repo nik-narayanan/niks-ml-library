@@ -5,9 +5,9 @@
 #include <gtest/gtest.h>
 #include "datasets/test_data.h"
 
-#include "../primitives/file.h"
-#include "../algorithms/svd.h"
-#include "../primitives/memory_owner.h"
+#include "../library/nml/primitives/file.h"
+#include "../library/nml/algorithms/svd.h"
+#include "../library/nml/primitives/memory_owner.h"
 
 using namespace nml;
 

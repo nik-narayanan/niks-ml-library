@@ -4,7 +4,7 @@
 
 
 #include <gtest/gtest.h>
-#include "../primitives/tree_red_black.h"
+#include "../library/nml/primitives/tree_red_black.h"
 
 using namespace nml;
 

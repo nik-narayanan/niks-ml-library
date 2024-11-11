@@ -5,8 +5,8 @@
 #include <gtest/gtest.h>
 #include "datasets/test_data.h"
 
-#include "../primitives/data_frame.h"
-#include "../primitives/memory_owner.h"
+#include "../library/nml/primitives/data_frame.h"
+#include "../library/nml/primitives/memory_owner.h"
 
 using namespace nml;
 

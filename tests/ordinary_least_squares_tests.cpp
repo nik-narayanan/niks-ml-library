@@ -4,9 +4,9 @@
 
 #include <gtest/gtest.h>
 
-#include "../primitives/file.h"
-#include "../primitives/memory_owner.h"
-#include "../algorithms/ordinary_least_squares.h"
+#include "../library/nml/primitives/file.h"
+#include "../library/nml/primitives/memory_owner.h"
+#include "../library/nml/algorithms/ordinary_least_squares.h"
 
 using namespace nml;
 

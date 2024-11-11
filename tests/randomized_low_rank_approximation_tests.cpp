@@ -5,9 +5,9 @@
 #include <gtest/gtest.h>
 #include "datasets/test_data.h"
 
-#include "../primitives/file.h"
-#include "../primitives/memory_owner.h"
-#include "../algorithms/randomized_low_rank_approximation.h"
+#include "../library/nml/primitives/file.h"
+#include "../library/nml/primitives/memory_owner.h"
+#include "../library/nml/algorithms/randomized_low_rank_approximation.h"
 
 using namespace nml;
 

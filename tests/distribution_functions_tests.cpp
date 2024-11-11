@@ -4,10 +4,10 @@
 #include <gtest/gtest.h>
 #include "datasets/test_data.h"
 
-#include "../primitives/file.h"
-#include "../primitives/memory_owner.h"
-#include "../primitives/matrix_owner.h"
-#include "../algorithms/distribution_functions.h"
+#include "../library/nml/primitives/file.h"
+#include "../library/nml/primitives/memory_owner.h"
+#include "../library/nml/primitives/matrix_owner.h"
+#include "../library/nml/algorithms/distribution_functions.h"
 
 using namespace nml;
 

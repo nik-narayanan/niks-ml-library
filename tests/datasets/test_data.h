@@ -28,7 +28,7 @@ struct TestData
 
 std::string TestData::test_file_path(Dataset dataset)
 {
-    const std::string dataset_root = std::string(PROJECT_DIR) + R"(/library/nml/tests/datasets/)";
+    const std::string dataset_root = std::string(PROJECT_DIR) + R"(/tests/datasets/)";
 
     switch (dataset)
     {

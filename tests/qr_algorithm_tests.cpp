@@ -4,9 +4,9 @@
 
 #include <gtest/gtest.h>
 
-#include "../primitives/file.h"
-#include "../algorithms/qr_algorithm.h"
-#include "../primitives/memory_owner.h"
+#include "../library/nml/primitives/file.h"
+#include "../library/nml/algorithms/qr_algorithm.h"
+#include "../library/nml/primitives/memory_owner.h"
 
 using namespace nml;
 

@@ -3,8 +3,8 @@
 //
 
 #include "../tests/datasets/test_data.h"
-#include "../primitives/data_frame.h"
-#include "../algorithms/logistic_regression.h"
+#include "../library/nml/primitives/data_frame.h"
+#include "../library/nml/algorithms/logistic_regression.h"
 
 using namespace nml;
 

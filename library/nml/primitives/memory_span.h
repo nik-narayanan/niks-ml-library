@@ -9,6 +9,7 @@
 #define alloca(upper_limit) __builtin_alloca((upper_limit))
 #endif // !alloca
 
+#include <cstring>
 #include <string_view>
 
 namespace nml

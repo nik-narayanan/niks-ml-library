@@ -5,6 +5,8 @@
 #ifndef NML_ALLOCATOR_H
 #define NML_ALLOCATOR_H
 
+#include <mutex>
+
 #include "heap.h"
 #include "span.h"
 
@@ -28,16 +30,16 @@ namespace nml
         [[nodiscard]] uint64_t claim_next_index() noexcept;
         [[nodiscard]] T& get_element(uint64_t index) noexcept;
 
-        template<std::enable_if_t<ThreadSafe, bool> = true>
+        template<bool TS = ThreadSafe, std::enable_if_t<TS, bool> = true>
         void lock() { _lock.lock(); }
 
-        template<std::enable_if_t<ThreadSafe, bool> = true>
+        template<bool TS = ThreadSafe, std::enable_if_t<TS, bool> = true>
         void unlock() { _lock.unlock(); }
 
-        template<std::enable_if_t<ThreadSafe, bool> = true>
+        template<bool TS = ThreadSafe, std::enable_if_t<TS, bool> = true>
         [[nodiscard]] uint64_t claim_next_index_unsafe() noexcept;
 
-        template<std::enable_if_t<ThreadSafe, bool> = true>
+        template<bool TS = ThreadSafe, std::enable_if_t<TS, bool> = true>
         void return_index_unsafe(uint64_t index) noexcept;
 
     private:
@@ -58,7 +60,16 @@ namespace nml
     };
 
     template<typename T, bool ThreadSafe>
-    template<std::enable_if_t<ThreadSafe, bool>>
+    template<bool TS, std::enable_if_t<TS, bool>>
+    uint64_t Allocator<T, ThreadSafe>::claim_next_index_unsafe() noexcept
+    {
+        if (_available_indexes.is_empty()) _resize();
+
+        return _available_indexes.pop();
+    }
+
+    template<typename T, bool ThreadSafe>
+    template<bool TS, std::enable_if_t<TS, bool>>
     void Allocator<T, ThreadSafe>::return_index_unsafe(uint64_t index) noexcept
     {
         if (index == 0) return;
@@ -68,15 +79,6 @@ namespace nml
         element.~T(), element = {};
 
         _available_indexes.push(index);
-    }
-
-    template<typename T, bool ThreadSafe>
-    template<std::enable_if_t<ThreadSafe, bool>>
-    uint64_t Allocator<T, ThreadSafe>::claim_next_index_unsafe() noexcept
-    {
-        if (_available_indexes.is_empty()) _resize();
-
-        return _available_indexes.pop();
     }
 
     template<typename T, bool ThreadSafe>

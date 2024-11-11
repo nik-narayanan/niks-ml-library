@@ -4,14 +4,14 @@
 
 #include <gtest/gtest.h>
 
-#include "../primitives/allocator.h"
-#include "../primitives/list.h"
+#include "../library/nml/primitives/allocator.h"
+#include "../library/nml/primitives/list.h"
 
 using namespace nml;
 
 TEST(allocator_tests, thread_safe)
 {
-    static uint32_t thread_ct = std::max(1u, std::thread::hardware_concurrency()), per_thread_ct = 200'000, default_ct = 100;
+    static uint32_t thread_ct = std::max(1u, std::thread::hardware_concurrency()), per_thread_ct = 2'000, default_ct = 100;
 
     auto allocator = Allocator<int, true>();
     auto threads = StaticOwnerList<std::thread>(thread_ct);

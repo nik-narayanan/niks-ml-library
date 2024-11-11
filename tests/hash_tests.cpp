@@ -8,7 +8,7 @@
 #include <string_view>
 #include <unordered_set>
 
-#include "../primitives/hash.h"
+#include "../library/nml/primitives/hash.h"
 
 using namespace nml;
 

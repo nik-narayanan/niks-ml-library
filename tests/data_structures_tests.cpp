@@ -5,9 +5,9 @@
 #include <random>
 #include <gtest/gtest.h>
 
-#include "../primitives/heap_min_max.h"
-#include "../primitives/memory_owner.h"
-#include "../primitives/heap.h"
+#include "../library/nml/primitives/heap_min_max.h"
+#include "../library/nml/primitives/memory_owner.h"
+#include "../library/nml/primitives/heap.h"
 
 using namespace nml;
 

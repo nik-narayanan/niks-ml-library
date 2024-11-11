@@ -5,8 +5,8 @@
 #ifndef NML_RANDOMIZED_LOW_RANK_APPROXIMATION_H
 #define NML_RANDOMIZED_LOW_RANK_APPROXIMATION_H
 
-#include "../algorithms/qr_algorithm.h"
-#include "../algorithms/lu_decomposition.h"
+#include "qr_algorithm.h"
+#include "lu_decomposition.h"
 
 namespace nml
 {

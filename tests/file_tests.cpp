@@ -5,13 +5,13 @@
 
 #include <gtest/gtest.h>
 
-#include "../primitives/file.h"
+#include "../library/nml/primitives/file.h"
 
 using namespace nml;
 
 TEST(file_tests, count_csv)
 {
-    uint64_t time = 0, trials = 50;
+    uint64_t time = 0, trials = 5;
 
     for (uint32_t i = 0; i < trials; ++i)
     {

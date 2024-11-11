@@ -9,10 +9,10 @@
 #include "../primitives/vector_span.h"
 #include "../primitives/matrix_span.h"
 
-#include "../algorithms/eigen_solver.h"
-#include "../algorithms/qr_algorithm.h"
-#include "../algorithms/lu_decomposition.h"
-#include "../algorithms/randomized_low_rank_approximation.h"
+#include "eigen_solver.h"
+#include "qr_algorithm.h"
+#include "lu_decomposition.h"
+#include "randomized_low_rank_approximation.h"
 
 const float TALL_SKINNY_RATIO = 10.0f;
 

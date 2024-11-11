@@ -5,7 +5,11 @@
 #ifndef NML_SPAN_H
 #define NML_SPAN_H
 
+#include <cstdint>
+#include <iostream>
 #include <algorithm>
+#include <functional>
+
 #include "memory_span.h"
 
 namespace nml
@@ -28,6 +32,10 @@ namespace nml
         explicit Span(const MemorySpan memory, const unsigned length = 0) noexcept
             : _values(memory.get_pointer<T>(0))
             , length(length == 0 ? memory.bytes / sizeof(T) : length)
+        { }
+
+        Span(std::initializer_list<T> values) noexcept
+            : _values(values.begin()), length(values.size())
         { }
 
         [[nodiscard]] inline constexpr unsigned bytes() const noexcept { return length * sizeof(T); }

@@ -583,23 +583,27 @@ int main()
 {
     char string[] = "string 1 | string 2 | string 3 | string 4 | string 5";
 
-    auto set = HashSet<std::string_view>();
+    auto set = HashSet<Span<char>>();
 
-    for (int i = 0; i < 10; ++i)
+    for (unsigned i = 0; i < 10; ++i)
     {
-        set.insert(std::string_view(string + 0, 8));
-        set.insert(std::string_view(string + 11, 8));
-        set.insert(std::string_view(string + 22, 8));
-        set.insert(std::string_view(string + 33, 8));
-        set.insert(std::string_view(string + 44, 8));
+        set.insert(Span<char>(string + 0, 8));
+        set.insert(Span<char>(string + 11, 8));
+        set.insert(Span<char>(string + 22, 8));
+        set.insert(Span<char>(string + 33, 8));
+        set.insert(Span<char>(string + 44, 8));
     }
 
     int ct = 0;
 
-    for (auto& value : set)
+    auto iterator = set.to_iterator();
+
+    while (iterator.has_next())
     {
-        if (ct++ > 0) std::cout << ", ";
-        std::cout << value;
+        auto next = iterator.next();
+
+        if (ct++ > 0) std::cout << ", ", next.print("", false);
+        else next.print("", false);
     }
 
     return 0;
@@ -614,23 +618,24 @@ using namespace nml;
 
 int main()
 {
-    auto map = HashMap<int, int>();
+    auto map = HashMap<int32_t, uint32_t>();
 
     for (int i = -10; i < 10; ++i)
     {
-        map.insert(i, map.count());
-        map.insert(i, map.count());
-        map.insert(i, map.count());
-        map.insert(i, map.count());
-        map.insert(i, map.count());
+        map.insert(i, map.count() * 2);
+        map.insert(i, map.count() * 2);
+        map.insert(i, map.count() * 2);
+        map.insert(i, map.count() * 2);
+        map.insert(i, map.count() * 2);
     }
 
-    for (auto& value : map)
+    for (int i = -10; i < 10; ++i)
     {
-        std::cout << "Key: " << value.first << ", Value: " << value.second << std::endl;
+        auto value = *map.get_value(i);
+        std::cout << value << std::endl;
     }
 
     return 0;
 }
 ```
-![alt text](images/hashset_benchmark.png)
+

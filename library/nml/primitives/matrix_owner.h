@@ -7,9 +7,9 @@
 
 #include <algorithm>
 #include "matrix_result.h"
-#include "../primitives/span.h"
-#include "../primitives/file.h"
-#include "../primitives/matrix_span.h"
+#include "span.h"
+#include "file.h"
+#include "matrix_span.h"
 
 namespace nml
 {
